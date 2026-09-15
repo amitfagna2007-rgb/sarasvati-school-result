@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#173f67"><meta name="app-version" content="1.0.0">
+<link rel="manifest" href="manifest.json">
+<title>Sarasvati Bal Vidhya Mandir - School Result System</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,"Noto Sans Devanagari",sans-serif;background:#f3f6fa;color:#17202a}
+header{background:#173f67;color:#fff;padding:18px 24px;display:flex;justify-content:space-between;gap:15px;align-items:center;flex-wrap:wrap}
+header h1{margin:0;font-size:25px}header p{margin:5px 0 0;opacity:.9}
+nav{background:#fff;padding:10px;display:flex;gap:7px;flex-wrap:wrap;box-shadow:0 2px 8px #0001;position:sticky;top:0;z-index:5}
+button,select,input{font:inherit;padding:9px 11px;border:1px solid #bbc6d1;border-radius:7px}
+button{background:#173f67;color:#fff;border:0;cursor:pointer}button.secondary{background:#64707c}button.green{background:#257a4b}button.red{background:#b42318}
+main{max-width:1250px;margin:auto;padding:18px}.page{display:none}.page.active{display:block}
+.card{background:#fff;border-radius:12px;padding:17px;margin-bottom:15px;box-shadow:0 2px 8px #00000012}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.stat{font-size:27px;font-weight:bold}.muted{color:#667}
+table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #d9e0e6;padding:8px;text-align:center}th{background:#e9f0f7}td.left{text-align:left}
+.scroll{overflow:auto}.pill{display:inline-block;padding:5px 9px;border-radius:20px;background:#e9f0f7;margin:3px}
+.notice{padding:10px;border-radius:8px;background:#fff7d6;margin-top:10px}
+@media(max-width:600px){header h1{font-size:19px}main{padding:9px}}
+@media print{nav,.no-print,header .no-print{display:none!important}body{background:#fff}main{max-width:none;padding:0}.card{box-shadow:none}}
+</style>
+</head>
+<body>
+<header>
+<div><h1>SARASVATI BAL VIDHYA MANDIR SAKARGHATA</h1><p>Student • Marks • Rank • Report Card Management</p></div>
+<div class="no-print"><button onclick="toggleLang()">हिंदी / English</button></div>
+</header>
+<nav class="no-print">
+<button onclick="page('home')">🏠 मुख्य पेज</button>
+<button onclick="page('students')">👨‍🎓 विद्यार्थी</button>
+<button onclick="page('subjects')">📚 विषय</button>
+<button onclick="page('marks')">📝 अंक दर्ज करें</button>
+<button onclick="page('result')">🏆 परिणाम / रैंक</button>
+<button onclick="page('report')">📄 रिपोर्ट कार्ड</button>
+<button onclick="page('backup')">💾 Backup / Update</button>
+</nav>
+<main>
+<section id="home" class="page active">
+<div class="card"><h2>स्कूल डैशबोर्ड</h2><div class="grid">
+<div class="card"><div class="stat" id="ds">0</div><div class="muted">कुल विद्यार्थी</div></div>
+<div class="card"><div class="stat" id="dc">0</div><div class="muted">कक्षाएँ</div></div>
+<div class="card"><div class="stat" id="dt">0</div><div class="muted">परीक्षाएँ/टेस्ट</div></div>
+<div class="card"><div class="stat" id="dr">0</div><div class="muted">अंक रिकॉर्ड</div></div>
+</div></div>
+<div class="card"><h3>शुरुआत कैसे करें?</h3><p>① विद्यार्थी जोड़ें → ② विषय सेट करें → ③ टेस्ट/परीक्षा चुनें → ④ अंक भरें → ⑤ परिणाम/रिपोर्ट प्रिंट करें।</p>
+<div class="notice">डेटा इसी ब्राउज़र में सेव रहता है। नियमित रूप से Backup डाउनलोड करके रखें।</div></div>
+</section>
+
+<section id="students" class="page">
+<div class="card"><h2>👨‍🎓 विद्यार्थी जोड़ें</h2>
+<div class="grid">
+<input id="sn" placeholder="विद्यार्थी का नाम">
+<input id="sr" placeholder="रोल नंबर">
+<select id="sc"></select><input id="ss" placeholder="सेक्शन" value="A">
+<input id="sf" placeholder="अभिभावक का नाम">
+</div><br><button class="green" onclick="addStudent()">+ विद्यार्थी जोड़ें</button>
+</div>
+<div class="card"><div class="row"><h2 style="margin-right:auto">विद्यार्थी सूची</h2>
+<select id="filterClass" onchange="renderStudents()"></select><select id="filterSec" onchange="renderStudents()"><option value="">सभी सेक्शन</option><option>A</option><option>B</option><option>C</option></select>
+<input id="studentSearch" oninput="renderStudents()" placeholder="नाम/रोल खोजें"></div><div class="scroll" id="studentList"></div></div>
+</section>
+
+<section id="subjects" class="page">
+<div class="card"><h2>📚 कक्षा के विषय</h2><p class="muted">हर कक्षा के लिए विषय अलग रख सकते हैं।</p>
+<div class="row"><select id="subClass"></select><input id="subName" placeholder="नया विषय, जैसे Hindi"><button onclick="addSubject()">+ विषय जोड़ें</button></div>
+<div id="subjectList"></div></div>
+</section>
+
+<section id="marks" class="page">
+<div class="card"><h2>📝 परीक्षा/टेस्ट के अंक</h2>
+<div class="grid">
+<select id="mc" onchange="loadMarks()"></select><select id="msec" onchange="loadMarks()"><option>A</option><option>B</option><option>C</option></select>
+<input id="exam" placeholder="परीक्षा नाम, जैसे Unit Test-1">
+<select id="msub"></select><input id="mtotal" type="number" value="100" min="1" placeholder="पूर्णांक">
+</div>
+<div class="notice">एक ही परीक्षा में विषय बदलकर हर विषय के अंक सेव करें।</div>
+<div class="scroll" id="marksTable"></div>
+</div>
+</section>
+
+<section id="result" class="page">
+<div class="card"><h2>🏆 कक्षा परिणाम और रैंक</h2>
+<div class="row"><select id="rc"></select><select id="rsec"><option>A</option><option>B</option><option>C</option></select>
+<select id="rexam"></select><button onclick="renderResult()">परिणाम देखें</button><button class="secondary" onclick="window.print()">🖨️ प्रिंट</button></div>
+<div id="resultTable"></div></div>
+</section>
+
+<section id="report" class="page">
+<div class="card"><h2>📄 विद्यार्थी रिपोर्ट कार्ड</h2>
+<div class="row"><select id="rep"></select><select id="repExam"><option value="">सभी यूनिट टेस्ट</option></select><button onclick="renderReport()">रिपोर्ट दिखाएँ</button><button class="secondary" onclick="window.print()">🖨️ प्रिंट</button></div>
+<div id="reportCard"></div></div>
+</section>
+
+<section id="backup" class="page">
+<div class="card"><h2>💾 Backup / Restore</h2><p>Backup डाउनलोड करके सुरक्षित रखें। दूसरे कंप्यूटर पर Restore किया जा सकता है।</p>
+<button onclick="backup()">⬇️ Backup डाउनलोड</button>
+<label><input type="file" id="restoreFile" accept=".json" onchange="restore(this.files[0])"> Backup Restore करें</label>
+</div>
+<div class="card"><h2>🔄 App Update</h2>
+<p>इस app का code online update किया जा सकता है। <b>विद्यार्थी, विषय, अंक और परिणाम का data अलग localStorage में रहता है</b>, इसलिए सामान्य code update से data delete नहीं होता।</p>
+<div class="row"><strong>Installed version:</strong> <span id="appVersion">1.0.0</span>
+<button class="green" onclick="checkForUpdate(true)">🔍 Check for Update</button></div>
+<div id="updateStatus" class="notice">Update system तैयार है। पहली बार online hosted version खोलना जरूरी है।</div>
+</div>
+</section>
+</main>
+
+<script>
+const CLASSES=['Nursery','LKG','UKG',...Array.from({length:12},(_,i)=>'Class '+(i+1))];
+const defaultSubjects={
+'Nursery':['Hindi','English','Maths','EVS'],'LKG':['Hindi','English','Maths','EVS'],'UKG':['Hindi','English','Maths','EVS']
+};
+let students=JSON.parse(localStorage.getItem('sbvm2_students')||'[]');
+let subjects=JSON.parse(localStorage.getItem('sbvm2_subjects')||'{}');
+let marks=JSON.parse(localStorage.getItem('sbvm2_marks')||'[]');
+CLASSES.forEach(c=>{if(!subjects[c]) subjects[c]=defaultSubjects[c]||['Hindi','English','Mathematics','Science','Social Science'];});
+function save(){localStorage.setItem('sbvm2_students',JSON.stringify(students));localStorage.setItem('sbvm2_subjects',JSON.stringify(subjects));localStorage.setItem('sbvm2_marks',JSON.stringify(marks));dash();}
+function opts(id,all=true){let e=document.getElementById(id);e.innerHTML=(all?'<option value="">सभी कक्षाएँ</option>':'')+CLASSES.map(c=>`<option>${c}</option>`).join('');}
+function init(){
+['sc','mc','rc','repExam'].forEach(()=>{});
+opts('sc',false);opts('mc',false);opts('rc',false);opts('subClass',false);opts('filterClass',true);
+document.getElementById('filterClass').value='';
+document.getElementById('sc').value='Class 1';document.getElementById('mc').value='Class 1';document.getElementById('rc').value='Class 1';document.getElementById('subClass').value='Class 1';
+refresh();loadMarks();
+}
+function page(id){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');refresh();if(id==='marks')loadMarks();}
+function addStudent(){
+let name=sn.value.trim(),roll=sr.value.trim(),cls=sc.value,sec=(ss.value||'A').trim().toUpperCase(),father=sf.value.trim();
+if(!name||!roll)return alert('नाम और रोल नंबर भरें।');
+if(students.some(x=>x.cls===cls&&x.sec===sec&&x.roll===roll))return alert('यह रोल नंबर पहले से है।');
+students.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),name,roll,cls,sec,father});save();sn.value='';sr.value='';sf.value='';renderStudents();refresh();}
+function renderStudents(){
+let fc=filterClass.value,fs=filterSec.value,q=studentSearch.value.toLowerCase();
+let a=students.filter(s=>(!fc||s.cls===fc)&&(!fs||s.sec===fs)&&(!q||s.name.toLowerCase().includes(q)||s.roll.toLowerCase().includes(q)));
+let h='<table><tr><th>रोल</th><th>नाम</th><th>कक्षा</th><th>सेक्शन</th><th>अभिभावक</th><th>Action</th></tr>';
+a.forEach(s=>h+=`<tr><td>${esc(s.roll)}</td><td class="left">${esc(s.name)}</td><td>${s.cls}</td><td>${s.sec}</td><td>${esc(s.father||'-')}</td><td><button onclick="editStudent('${s.id}')">✏️ Edit</button> <button class="red" onclick="delStudent('${s.id}')">हटाएँ</button></td></tr>`);
+studentList.innerHTML=h+'</table>';
+}
+function editStudent(id){
+let s=students.find(x=>x.id===id);if(!s)return;
+let name=prompt('विद्यार्थी का नाम:',s.name);if(name===null)return;
+let roll=prompt('रोल नंबर:',s.roll);if(roll===null)return;
+let sec=(prompt('सेक्शन:',s.sec)||s.sec).trim().toUpperCase();
+let father=prompt('अभिभावक का नाम:',s.father||'');if(father===null)father=s.father||'';
+name=name.trim();roll=roll.trim();
+if(!name||!roll)return alert('नाम और रोल नंबर खाली नहीं हो सकते।');
+if(students.some(x=>x.id!==id&&x.cls===s.cls&&x.sec===sec&&x.roll===roll))return alert('यह रोल नंबर पहले से है।');
+s.name=name;s.roll=roll;s.sec=sec;s.father=father;save();refresh();
+}
+function delStudent(id){if(confirm('इस विद्यार्थी और उसके अंक हटाएँ?')){students=students.filter(s=>s.id!==id);marks=marks.filter(m=>m.sid!==id);save();renderStudents();}}
+function addSubject(){let c=subClass.value,n=subName.value.trim();if(!n)return;if(!subjects[c].includes(n))subjects[c].push(n);subName.value='';save();renderSubjects();loadMarks();}
+function renderSubjects(){let c=subClass.value,h='<p>';subjects[c].forEach((s,i)=>h+=`<span class="pill">${esc(s)} <button class="red" style="padding:3px 6px" onclick="delSubject(${i})">×</button></span>`);subjectList.innerHTML=h+'</p>';}
+function delSubject(i){
+let c=subClass.value;
+if(subjects[c].length<=1)return alert('कम से कम एक विषय रखें।');
+let removed=subjects[c][i];
+if(!confirm('विषय "'+removed+'" और उसके सभी अंक रिकॉर्ड हटाएँ?'))return;
+subjects[c].splice(i,1);
+marks=marks.filter(m=>!(m.cls===c&&m.subject===removed));
+save();renderSubjects();loadMarks(true);
+}
+subClass.onchange=renderSubjects;
+function loadMarks(preserve=true){
+let c=mc.value,sec=msec.value;
+let previousSub=preserve?msub.value:'';
+let previousExam=exam.value;
+let previousTotal=mtotal.value;
+msub.innerHTML=(subjects[c]||[]).map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+if(previousSub && (subjects[c]||[]).includes(previousSub)) msub.value=previousSub;
+let list=students.filter(s=>s.cls===c&&s.sec===sec),test=previousExam,sub=msub.value,total=Number(previousTotal)||100;
+let h='<table><tr><th>रोल</th><th>विद्यार्थी</th><th>प्राप्त अंक</th></tr>';
+list.forEach(s=>{let old=marks.find(m=>m.sid===s.id&&m.exam===test&&m.subject===sub);h+=`<tr><td>${esc(s.roll)}</td><td class="left">${esc(s.name)}</td><td><input id="mark_${s.id}" type="number" min="0" max="${total}" value="${old?old.score:''}" style="width:110px"></td></tr>`});
+marksTable.innerHTML=list.length?h+'</table><br><button class="green" onclick="saveMarks()">💾 अंक सेव करें</button>':'<p>इस कक्षा/सेक्शन में विद्यार्थी नहीं हैं।';
+}
+exam.oninput=()=>loadMarks(true);
+msub.onchange=()=>loadMarks(true);
+mtotal.oninput=()=>loadMarks(true);
+function saveMarks(){
+let c=mc.value,sec=msec.value,test=exam.value.trim(),sub=msub.value,total=Number(mtotal.value)||100;
+if(!test||!sub)return alert('परीक्षा नाम और विषय चुनें।');
+students.filter(s=>s.cls===c&&s.sec===sec).forEach(s=>{let el=document.getElementById('mark_'+s.id);if(el&&el.value!==''){marks=marks.filter(m=>!(m.sid===s.id&&m.exam===test&&m.subject===sub));marks.push({sid:s.id,cls:c,sec,exam:test,subject:sub,score:Number(el.value),total,date:new Date().toLocaleDateString('hi-IN')});}});
+save();alert('अंक सफलतापूर्वक सेव हो गए।');refresh();loadMarks();
+}
+function examsFor(c,sec){return [...new Set(marks.filter(m=>m.cls===c&&m.sec===sec).map(m=>m.exam))];}
+rc.onchange=refresh;rsec.onchange=refresh;
+function renderResult(){
+let c=rc.value,sec=rsec.value,test=rexam.value;
+let arr=students.filter(s=>s.cls===c&&s.sec===sec).map(s=>{let mm=marks.filter(m=>m.sid===s.id&&m.exam===test),score=mm.reduce((a,m)=>a+m.score,0),total=mm.reduce((a,m)=>a+m.total,0);return {s,mm,score,total,pct:total?score/total*100:0}});
+arr.sort((a,b)=>b.pct-a.pct);
+let h=`<h3>${c} - Section ${sec} | ${esc(test)}</h3><table><tr><th>रैंक</th><th>रोल</th><th>नाम</th>${(subjects[c]||[]).map(x=>`<th>${esc(x)}</th>`).join('')}<th>कुल</th><th>%</th></tr>`;
+arr.forEach((x,i)=>{let rank=x.mm.length?i+1:'-';h+=`<tr><td>${rank}</td><td>${esc(x.s.roll)}</td><td class="left">${esc(x.s.name)}</td>`;subjects[c].forEach(sub=>{let m=x.mm.find(y=>y.subject===sub);h+=`<td>${m?m.score+'/'+m.total:'-'}</td>`});h+=`<td>${x.mm.length?x.score+'/'+x.total:'-'}</td><td>${x.mm.length?x.pct.toFixed(2)+'%':'-'}</td></tr>`});
+resultTable.innerHTML=arr.length?h+'</table>':'<p>रिकॉर्ड नहीं मिला।';
+}
+function renderReport(){
+let s=students.find(x=>x.id===rep.value);if(!s)return;let test=repExam.value,mm=marks.filter(m=>m.sid===s.id&&(!test||m.exam===test));
+let by={};mm.forEach(m=>(by[m.exam]??=[]).push(m));
+let h=`<div class="card"><h2>${esc(s.name)}</h2><p>रोल: ${esc(s.roll)} | कक्षा: ${s.cls} - ${s.sec} | अभिभावक: ${esc(s.father||'-')}</p>`;
+Object.keys(by).forEach(ex=>{let total=by[ex].reduce((a,m)=>a+m.total,0),score=by[ex].reduce((a,m)=>a+m.score,0);h+=`<h3>${esc(ex)}</h3><table><tr><th>विषय</th><th>अंक</th><th>प्रतिशत</th></tr>`;by[ex].forEach(m=>h+=`<tr><td>${esc(m.subject)}</td><td>${m.score}/${m.total}</td><td>${(m.score/m.total*100).toFixed(2)}%</td></tr>`);h+=`<tr><th>कुल</th><th>${score}/${total}</th><th>${(score/total*100).toFixed(2)}%</th></tr></table>`});
+reportCard.innerHTML=h+'</div>';
+}
+rep.onchange=()=>{let s=students.find(x=>x.id===rep.value);let ex= s?examsFor(s.cls,s.sec):[];repExam.innerHTML='<option value="">सभी यूनिट टेस्ट</option>'+ex.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');};
+function refresh(){
+dash();renderStudents();renderSubjects();loadMarks();
+rep.innerHTML=students.map(s=>`<option value="${s.id}">${esc(s.roll)} - ${esc(s.name)} (${s.cls}-${s.sec})</option>`).join('');
+rep.onchange();
+rexam.innerHTML=examsFor(rc.value,rsec.value).map(x=>`<option>${esc(x)}</option>`).join('');
+}
+function dash(){ds.textContent=students.length;dc.textContent=new Set(students.map(s=>s.cls)).size;dt.textContent=new Set(marks.map(m=>m.exam)).size;dr.textContent=marks.length;}
+function backup(){let data={school:'SARASVATI BAL VIDHYA MANDIR SAKARGHATA',version:2,students,subjects,marks};let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='Sarasvati_School_Backup.json';a.click();}
+function restore(file){if(!file)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!d.students||!d.subjects||!d.marks)throw 0;students=d.students;subjects=d.subjects;marks=d.marks;save();refresh();alert('Backup Restore हो गया।')}catch(e){alert('गलत या खराब Backup file।')}};r.readAsText(file);}
+function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+const APP_VERSION='1.0.0';
+const UPDATE_MANIFEST='version.json';
+function setUpdateStatus(msg){const e=document.getElementById('updateStatus');if(e)e.textContent=msg;}
+function setVersion(){const e=document.getElementById('appVersion');if(e)e.textContent=APP_VERSION;}
+async function checkForUpdate(showMessage=false){
+  if(location.protocol==='file:'){setUpdateStatus('यह local ZIP/file mode है। Automatic update के लिए app को HTTPS hosting पर चलाना होगा।');return;}
+  try{
+    if(showMessage)setUpdateStatus('Update check हो रहा है…');
+    const r=await fetch(UPDATE_MANIFEST+'?t='+Date.now(),{cache:'no-store'});
+    if(!r.ok)throw new Error('manifest unavailable');
+    const d=await r.json();
+    if(d.version && d.version!==APP_VERSION){
+      setUpdateStatus('नया version '+d.version+' उपलब्ध है। Update apply किया जा रहा है…');
+      if('serviceWorker' in navigator){
+        const reg=await navigator.serviceWorker.getRegistration();
+        if(reg){await reg.update();setTimeout(()=>location.reload(),1200);return;}
+      }
+      location.reload();
+    } else {setUpdateStatus('✅ App पहले से latest version पर है।');}
+  }catch(e){if(showMessage)setUpdateStatus('Update check नहीं हो पाया। Internet/hosting connection जाँचें।');}
+}
+async function registerPWA(){
+  if(!('serviceWorker' in navigator))return;
+  try{
+    const reg=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
+    reg.update();
+    if(reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'});}
+    navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload());
+  }catch(e){console.log('PWA registration failed',e);}
+}
+function toggleLang(){alert('English labels को अगले संस्करण में पूरी तरह बदला जा सकता है। अभी मुख्य डेटा/नाम English और Hindi दोनों में दर्ज किए जा सकते हैं।');}
+init();
+setVersion();
+registerPWA();
+setTimeout(()=>checkForUpdate(false),1500);
+</script>
+</body></html>
