@@ -1,1 +1,1 @@
-{"version":"1.4.0","updated":"2026-09-16","notes":"Added email/password login, forgot-password recovery, and account-based cloud sync"}
+{"version":"1.4.1","updated":"2026-09-16","notes":"Fixed PWA cache and forced Firebase login/sync scripts to load"}
