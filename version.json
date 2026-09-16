@@ -1,1 +1,1 @@
-{"version":"1.4.1","updated":"2026-09-16","notes":"Fixed PWA cache and forced Firebase login/sync scripts to load"}
+{"version":"1.4.2","updated":"2026-09-16","notes":"Firebase login and cloud sync are loaded directly from index.html"}
