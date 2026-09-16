@@ -1,5 +1,5 @@
-const CACHE_NAME = 'sarasvati-school-v1.0.1';
-const APP_ASSETS = ['./','./index.html','./manifest.json','./version.json'];
+const CACHE_NAME = 'sarasvati-school-v1.0.2';
+const APP_ASSETS = ['./','./index.html','./manifest.json','./version.json','./icon.svg','./icon-192.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_ASSETS)).then(() => self.skipWaiting()));
 });
@@ -12,7 +12,7 @@ self.addEventListener('fetch', event => {
   if(req.method!=='GET') return;
   const url=new URL(req.url);
   if(url.origin!==self.location.origin) return;
-  if(url.pathname.endsWith('/')||url.pathname.endsWith('/index.html')||url.pathname.endsWith('/version.json')){
+  if(url.pathname.endsWith('/')||url.pathname.endsWith('/index.html')||url.pathname.endsWith('/version.json')||url.pathname.endsWith('/manifest.json')){
     event.respondWith(fetch(req,{cache:'no-store'}).then(res=>{const copy=res.clone();caches.open(CACHE_NAME).then(c=>c.put(req,copy));return res;}).catch(()=>caches.match(req).then(r=>r||caches.match('./index.html'))));
     return;
   }
