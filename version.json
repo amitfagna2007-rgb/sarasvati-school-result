@@ -1,1 +1,1 @@
-{"version":"1.0.8","updated":"2026-09-16","notes":"Fixed Firebase first-login flow and refresh/cache handling"}
+{"version":"1.1.0","updated":"2026-09-16","notes":"Hard-fixed Firebase login input, disabled automatic session restore, and refreshed PWA cache"}
