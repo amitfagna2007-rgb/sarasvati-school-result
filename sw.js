@@ -1,5 +1,5 @@
-const CACHE_NAME = 'sarasvati-school-v1.3.1';
-const APP_ASSETS = ['./','./index.html','./manifest.json','./version.json','./icon-192.png?v=4','./firebase-sync.js?v=1'];
+const CACHE_NAME = 'sarasvati-school-v1.4.0';
+const APP_ASSETS = ['./','./index.html','./manifest.json','./version.json','./icon-192.png?v=4','./firebase-login.js?v=1','./firebase-sync.js?v=2'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_ASSETS)).then(() => self.skipWaiting()));
 });
@@ -15,8 +15,8 @@ self.addEventListener('fetch', event => {
   if(url.pathname.endsWith('/index.html')||url.pathname.endsWith('/')){
     event.respondWith(fetch(req,{cache:'no-store'}).then(async res=>{
       let text=await res.text();
-      if(!text.includes('firebase-sync.js')) text=text.replace('</body>','<script src="./firebase-sync.js?v=1"></script></body>');
-      text=text.replaceAll('1.0.3','1.3.1');
+      if(!text.includes('firebase-login.js')) text=text.replace('</body>','<script src="./firebase-login.js?v=1"></script><script src="./firebase-sync.js?v=2"></script></body>');
+      text=text.replaceAll('1.0.3','1.4.0');
       const headers=new Headers(res.headers);headers.set('content-type','text/html; charset=utf-8');
       const out=new Response(text,{status:res.status,statusText:res.statusText,headers});
       caches.open(CACHE_NAME).then(c=>c.put(req,out.clone()));
@@ -24,7 +24,7 @@ self.addEventListener('fetch', event => {
     }).catch(()=>caches.match(req).then(r=>r||caches.match('./index.html'))));
     return;
   }
-  if(url.pathname.endsWith('/version.json')||url.pathname.endsWith('/manifest.json')||url.pathname.endsWith('/firebase-sync.js')){
+  if(url.pathname.endsWith('/version.json')||url.pathname.endsWith('/manifest.json')||url.pathname.endsWith('/firebase-login.js')||url.pathname.endsWith('/firebase-sync.js')){
     event.respondWith(fetch(req,{cache:'no-store'}).then(res=>{const copy=res.clone();caches.open(CACHE_NAME).then(c=>c.put(req,copy));return res;}).catch(()=>caches.match(req)));
     return;
   }
