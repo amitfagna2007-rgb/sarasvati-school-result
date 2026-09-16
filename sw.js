@@ -1,5 +1,5 @@
-const CACHE_NAME = 'sarasvati-school-v1.0.2';
-const APP_ASSETS = ['./','./index.html','./manifest.json','./version.json','./icon.svg','./icon-192.png'];
+const CACHE_NAME = 'sarasvati-school-v1.0.3';
+const APP_ASSETS = ['./','./index.html','./manifest.json','./version.json','./icon.svg','./icon-192.jpg?v=3'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_ASSETS)).then(() => self.skipWaiting()));
 });
