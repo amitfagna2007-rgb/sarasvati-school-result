@@ -1,87 +1,26 @@
 (function(){
   const CFG={apiKey:'AIzaSyCORJ_E8w5G7h0-z65vy22SSB4_UcJY_tw',authDomain:'sarasvati-school-result.firebaseapp.com',projectId:'sarasvati-school-result',storageBucket:'sarasvati-school-result.firebasestorage.app',messagingSenderId:'178995934524',appId:'1:178995934524:web:2d00528bf6116a4a221a39',measurementId:'G-8X48NY379L'};
   const SDK=['https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js','https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js','https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js'];
-  let db=null,auth=null,user=null,unsub=null,syncing=false,reloading=false,ready=false;
+  let db=null,auth=null,user=null,unsub=null,syncing=false,reloading=false;
   const $=id=>document.getElementById(id);
-  function addScript(src){return new Promise((resolve,reject)=>{let s=document.createElement('script');s.src=src;s.async=false;s.onload=resolve;s.onerror=()=>reject(new Error('SDK load failed: '+src));document.head.appendChild(s);});}
   function ui(){
     if($('firebaseGate'))return;
-    const st=document.createElement('style');st.textContent='#firebaseGate{position:fixed;inset:0;background:#f3f6fa;z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px}#firebaseLogin{width:min(430px,100%);background:#fff;border-radius:16px;padding:22px;box-shadow:0 8px 30px #0002}#firebaseLogin h2{margin-top:0;color:#173f67}#firebaseLogin input{width:100%;margin:6px 0;box-sizing:border-box}#firebaseLogin button{width:100%;margin-top:8px}#firebaseMsg{margin-top:10px;padding:9px;border-radius:8px;background:#fff7d6;word-break:break-word;font-size:13px}#accountBar{position:fixed;right:10px;bottom:10px;z-index:20;background:#fff;padding:8px 10px;border-radius:10px;box-shadow:0 2px 12px #0002;font-size:12px}';document.head.appendChild(st);
-    const gate=document.createElement('div');gate.id='firebaseGate';gate.innerHTML='<div id="firebaseLogin"><h2>🔐 Sarasvati School Result</h2><p>मोबाइल और लैपटॉप में data sync करने के लिए Login करें।</p><input id="fbEmail" type="email" placeholder="Email address" autocomplete="email"><input id="fbPass" type="password" placeholder="Password (कम से कम 6 अक्षर)" autocomplete="current-password"><button id="fbLogin" type="button">Login</button><button id="fbSignup" class="secondary" type="button">नया Account बनाएं</button><div id="firebaseMsg">Firebase connect हो रहा है...</div></div>';document.body.prepend(gate);
+    const st=document.createElement('style');st.textContent='#firebaseGate{position:fixed;inset:0;background:#f3f6fa;z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px}#firebaseLogin{width:min(430px,100%);background:#fff;border-radius:16px;padding:22px;box-shadow:0 8px 30px #0002}#firebaseLogin h2{margin-top:0;color:#173f67}#firebaseLogin input{display:block;width:100%;margin:8px 0;padding:11px;pointer-events:auto}#firebaseLogin button{width:100%;margin-top:8px}#firebaseMsg{margin-top:10px;padding:9px;border-radius:8px;background:#fff7d6;word-break:break-word}#accountBar{position:fixed;right:10px;bottom:10px;z-index:20;background:#fff;padding:8px 10px;border-radius:10px;box-shadow:0 2px 12px #0002;font-size:12px}';document.head.appendChild(st);
+    const gate=document.createElement('div');gate.id='firebaseGate';gate.innerHTML='<div id="firebaseLogin"><h2>🔐 Sarasvati School Result</h2><p>मोबाइल और लैपटॉप में data sync करने के लिए Login करें।</p><input id="fbEmail" type="email" placeholder="Email address" autocomplete="email"><input id="fbPass" type="password" placeholder="Password" autocomplete="current-password"><button id="fbLogin">Login</button><button id="fbSignup" class="secondary">नया Account बनाएं</button><div id="firebaseMsg">Firebase connect हो रहा है...</div></div>';
+    (document.body||document.documentElement).prepend(gate);
     $('fbLogin').onclick=()=>login(false);$('fbSignup').onclick=()=>login(true);
-    $('fbPass').addEventListener('keydown',e=>{if(e.key==='Enter')login(false);});
   }
   function msg(t,ok){let e=$('firebaseMsg');if(e){e.textContent=t;e.style.background=ok?'#e8f7ed':'#fff7d6';}}
-  function errorText(e,signup){
-    const c=e&&e.code||'';
-    const map={
-      'auth/invalid-email':'Email address सही नहीं है।',
-      'auth/missing-password':'Password डालें।',
-      'auth/weak-password':'Password कम से कम 6 अक्षरों का रखें।',
-      'auth/email-already-in-use':'इस email का account पहले से बना हुआ है। Login करें।',
-      'auth/invalid-credential':'Email या password गलत है।',
-      'auth/user-not-found':'इस email से account नहीं मिला। पहले नया Account बनाएं।',
-      'auth/wrong-password':'Password गलत है।',
-      'auth/too-many-requests':'बहुत बार कोशिश हुई है। कुछ देर बाद फिर प्रयास करें।',
-      'auth/network-request-failed':'Internet connection की समस्या है। Internet चालू करके फिर प्रयास करें।',
-      'auth/unauthorized-domain':'GitHub Pages domain Firebase में Authorized Domains में जोड़ना बाकी है।',
-      'auth/operation-not-allowed':'Firebase Authentication में Email/Password sign-in अभी enabled नहीं है।',
-      'auth/internal-error':'Firebase की temporary समस्या है। फिर से प्रयास करें।'
-    };
-    return (map[c]||((signup?'Account बनाने':'Login करने')+' में समस्या हुई। '+(e&&e.message||'')))+' ['+c+']';
-  }
-  function showApp(){let g=$('firebaseGate');if(g)g.style.display='none';if(!$('accountBar')){let b=document.createElement('div');b.id='accountBar';b.innerHTML='<span id="fbUser"></span> <button style="width:auto;margin:0;padding:5px 8px" id="fbOut" type="button">Logout</button>';document.body.appendChild(b);$('fbOut').onclick=()=>auth.signOut();}if($('fbUser'))$('fbUser').textContent=user.email;}
+  function showApp(){let g=$('firebaseGate');if(g)g.style.display='none';if(!$('accountBar')){let b=document.createElement('div');b.id='accountBar';b.innerHTML='<span id="fbUser"></span> <button style="width:auto;margin:0;padding:5px 8px" id="fbOut">Logout</button>';document.body.appendChild(b);$('fbOut').onclick=()=>auth.signOut();}if($('fbUser'))$('fbUser').textContent=user.email;}
   function hideApp(){let g=$('firebaseGate');if(g)g.style.display='flex';let b=$('accountBar');if(b)b.remove();}
-  async function login(signup){
-    if(!ready||!auth){return msg('Firebase अभी तैयार नहीं है। 2–3 सेकंड रुककर फिर Login करें।');}
-    const email=($('fbEmail').value||'').trim(),pass=$('fbPass').value||'';
-    if(!email)return msg('Email address डालें।');
-    if(pass.length<6)return msg('Password कम से कम 6 characters का होना चाहिए।');
-    const lb=$('fbLogin'),sb=$('fbSignup');if(lb)lb.disabled=true;if(sb)sb.disabled=true;
-    msg(signup?'Account बनाया जा रहा है...':'Login हो रहा है...');
-    try{
-      if(signup)await auth.createUserWithEmailAndPassword(email,pass);
-      else await auth.signInWithEmailAndPassword(email,pass);
-    }catch(e){console.error('Firebase auth error',e);msg(errorText(e,signup));}
-    finally{if(lb)lb.disabled=false;if(sb)sb.disabled=false;}
-  }
+  async function login(signup){let email=$('fbEmail').value.trim(),pass=$('fbPass').value;if(!email||pass.length<6)return msg('सही email और कम से कम 6 character का password डालें।');if(!auth)return msg('Firebase अभी तैयार नहीं है। नीचे Retry दबाएँ।');try{msg(signup?'Account बनाया जा रहा है...':'Login हो रहा है...');if(signup)await auth.createUserWithEmailAndPassword(email,pass);else await auth.signInWithEmailAndPassword(email,pass);}catch(e){msg((e.code||'error')+': '+(e.message||'Login failed'));}}
+  function addRetry(){if($('fbRetry'))return;let b=document.createElement('button');b.id='fbRetry';b.className='secondary';b.textContent='🔄 Firebase Retry';b.onclick=start;let box=$('firebaseLogin');if(box)box.appendChild(b);}
   function localData(){return {students:JSON.parse(localStorage.getItem('sbvm2_students')||'[]'),subjects:JSON.parse(localStorage.getItem('sbvm2_subjects')||'{}'),marks:JSON.parse(localStorage.getItem('sbvm2_marks')||'[]')};}
   function putLocal(d){localStorage.setItem('sbvm2_students',JSON.stringify(Array.isArray(d.students)?d.students:[]));localStorage.setItem('sbvm2_subjects',JSON.stringify(d.subjects&&typeof d.subjects==='object'?d.subjects:{}));localStorage.setItem('sbvm2_marks',JSON.stringify(Array.isArray(d.marks)?d.marks:[]));}
   function sameData(a,b){return JSON.stringify({students:a.students||[],subjects:a.subjects||{},marks:a.marks||[]})===JSON.stringify({students:b.students||[],subjects:b.subjects||{},marks:b.marks||[]});}
-  function mergeLocalCloud(cloud,local){
-    if(!cloud)return local;
-    const sm=new Map((cloud.students||[]).map(x=>[x.id,x]));(local.students||[]).forEach(x=>{if(!sm.has(x.id))sm.set(x.id,x);});
-    const mm=new Map((cloud.marks||[]).map(x=>[[(x.studentId||''),x.cls||'',x.sec||'',x.exam||'',x.subject||''].join('|'),x]));(local.marks||[]).forEach(x=>{let k=[x.studentId||'',x.cls||'',x.sec||'',x.exam||'',x.subject||''].join('|');if(!mm.has(k))mm.set(k,x);});
-    const sub=JSON.parse(JSON.stringify(cloud.subjects||{}));Object.keys(local.subjects||{}).forEach(c=>{if(!sub[c])sub[c]=local.subjects[c];else (local.subjects[c]||[]).forEach(s=>{if(!sub[c].includes(s))sub[c].push(s);});});
-    return {students:[...sm.values()],subjects:sub,marks:[...mm.values()]};
-  }
-  async function syncInitial(){
-    const ref=db.collection('users').doc(user.uid),snap=await ref.get(),local=localData();
-    if(snap.exists){
-      const cloud=snap.data(),merged=mergeLocalCloud(cloud,local);
-      if(!sameData(merged,local)){putLocal(merged);if(!reloading){reloading=true;location.reload();return;}}
-      await ref.set({...merged,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-    }else{await ref.set({...local,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});}
-    if(unsub)unsub();
-    unsub=ref.onSnapshot(s=>{if(!s.exists||syncing)return;let d=s.data(),now=localData();if(d.students||d.subjects||d.marks){let incoming={students:d.students||[],subjects:d.subjects||{},marks:d.marks||[]};if(!sameData(incoming,now)&&!reloading){putLocal(incoming);reloading=true;location.reload();}}});
-  }
-  async function cloudSave(){if(!user||syncing)return;syncing=true;try{let d=localData();await db.collection('users').doc(user.uid).set({...d,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});}catch(e){console.warn('Cloud save failed',e);msg('Cloud sync error: '+(e.message||'permission'));}finally{syncing=false;}}
-  async function start(){
-    ui();
-    try{
-      for(const s of SDK)await addScript(s);
-      if(!firebase.apps.length)firebase.initializeApp(CFG);
-      auth=firebase.auth();db=firebase.firestore();
-      auth.useDeviceLanguage();
-      ready=true;
-      if(typeof window.save==='function'&&!window.save._cloudWrapped){const originalSave=window.save;const wrapped=function(){originalSave();cloudSave();};wrapped._cloudWrapped=true;window.save=wrapped;}
-      auth.onAuthStateChanged(async u=>{
-        user=u;
-        if(!u){hideApp();msg('Login करें।');return;}
-        showApp();msg('Login सफल! Cloud data check हो रहा है...',true);
-        try{await syncInitial();msg('Cloud sync चालू है।',true);}catch(e){console.error('Firestore sync error',e);msg('Login सफल है, लेकिन Cloud sync में समस्या है: '+(e.code||e.message||'permission error'));}
-      });
-    }catch(e){console.error('Firebase startup error',e);msg('Firebase शुरू नहीं हो पाया: '+(e.message||e));}
-  }
+  function mergeLocalCloud(cloud,local){if(!cloud)return local;const sm=new Map((cloud.students||[]).map(x=>[x.id,x]));(local.students||[]).forEach(x=>{if(!sm.has(x.id))sm.set(x.id,x);});const mm=new Map((cloud.marks||[]).map(x=>[[(x.studentId||''),x.cls||'',x.sec||'',x.exam||'',x.subject||''].join('|'),x]));(local.marks||[]).forEach(x=>{let k=[x.studentId||'',x.cls||'',x.sec||'',x.exam||'',x.subject||''].join('|');if(!mm.has(k))mm.set(k,x);});const sub=JSON.parse(JSON.stringify(cloud.subjects||{}));Object.keys(local.subjects||{}).forEach(c=>{if(!sub[c])sub[c]=local.subjects[c];else(local.subjects[c]||[]).forEach(s=>{if(!sub[c].includes(s))sub[c].push(s);});});return {students:[...sm.values()],subjects:sub,marks:[...mm.values()]};}
+  async function syncInitial(){const ref=db.collection('users').doc(user.uid),snap=await ref.get(),local=localData();if(snap.exists){const cloud=snap.data(),merged=mergeLocalCloud(cloud,local);if(!sameData(merged,local)){putLocal(merged);if(!reloading){reloading=true;location.reload();return;}}await ref.set({...merged,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});}else await ref.set({...local,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});if(unsub)unsub();unsub=ref.onSnapshot(s=>{if(!s.exists||syncing)return;let d=s.data(),now=localData();if(d.students||d.subjects||d.marks){let incoming={students:d.students||[],subjects:d.subjects||{},marks:d.marks||[]};if(!sameData(incoming,now)&&!reloading){putLocal(incoming);reloading=true;location.reload();}}});}
+  async function cloudSave(){if(!user||syncing)return;syncing=true;try{let d=localData();await db.collection('users').doc(user.uid).set({...d,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});}catch(e){console.warn('Cloud save failed',e);}finally{syncing=false;}}
+  async function start(){ui();msg('Firebase connect हो रहा है...');try{for(const s of SDK){await addScript(s);}if(!window.firebase)throw new Error('Firebase SDK load नहीं हुआ');if(!firebase.apps.length)firebase.initializeApp(CFG);auth=firebase.auth();db=firebase.firestore();auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});if(typeof window.save==='function'&&!window.save._cloudWrapped){const originalSave=window.save;const wrapped=function(){originalSave();cloudSave();};wrapped._cloudWrapped=true;window.save=wrapped;}auth.onAuthStateChanged(async u=>{user=u;if(!u){hideApp();msg('Login करें।');return;}showApp();try{await syncInitial();msg('Cloud sync चालू है।',true);}catch(e){msg('Firestore error: '+(e.code||e.message));console.error(e);}});}catch(e){console.error(e);msg('Firebase SDK load नहीं हो रहा। Internet/CDN connection समस्या है। Retry दबाएँ।');addRetry();}}
   if(document.readyState==='complete')setTimeout(start,0);else window.addEventListener('load',start,{once:true});
 })();
