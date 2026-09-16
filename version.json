@@ -1,1 +1,1 @@
-{"version":"1.1.0","updated":"2026-09-16","notes":"Hard-fixed Firebase login input, disabled automatic session restore, and refreshed PWA cache"}
+{"version":"1.3.1","updated":"2026-09-16","notes":"Removed login and added automatic mobile-laptop cloud sync"}
