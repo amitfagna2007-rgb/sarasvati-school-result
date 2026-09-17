@@ -1,1 +1,1 @@
-{"version":"1.4.4","updated":"2026-09-17","notes":"Fixed navigation returning to home during Firebase cloud sync"}
+{"version":"1.4.2","updated":"2026-09-17","notes":"Stable version; fixed automatic navigation reload issue"}
