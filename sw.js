@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sarasvati-school-v1.4.6';
+const CACHE_NAME = 'sarasvati-school-v1.4.7';
 const APP_ASSETS = ['./','./index.html','./manifest.json','./version.json','./icon-192.png?v=4','./firebase-login.js?v=3','./firebase-sync.js?v=4'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_ASSETS)).then(() => self.skipWaiting()));
@@ -17,7 +17,7 @@ self.addEventListener('fetch', event => {
   const isVersion = url.pathname.endsWith('/version.json');
   const isManifest = url.pathname.endsWith('/manifest.json');
   if(isVersion){
-    event.respondWith(new Response('{"version":"1.4.6","updated":"2026-09-17","notes":"Professional A4 portrait report card with father and mother details"}',{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}}));
+    event.respondWith(new Response('{"version":"1.4.7","updated":"2026-09-17","notes":"Added Health and Physical Education and Art Education to report-card subjects"}',{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}}));
     return;
   }
   if(isIndex){
