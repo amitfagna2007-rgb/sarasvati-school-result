@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sarasvati-school-v1.4.4';
+const CACHE_NAME = 'sarasvati-school-v1.4.5';
 const APP_ASSETS = ['./','./index.html','./manifest.json','./version.json','./icon-192.png?v=4','./firebase-login.js?v=3','./firebase-sync.js?v=4'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_ASSETS)).then(() => self.skipWaiting()));
@@ -15,7 +15,13 @@ self.addEventListener('fetch', event => {
 
   const isIndex = url.pathname.endsWith('/index.html') || url.pathname.endsWith('/');
   const isAppScript = url.pathname.endsWith('/firebase-login.js') || url.pathname.endsWith('/firebase-sync.js');
-  const isMeta = url.pathname.endsWith('/version.json') || url.pathname.endsWith('/manifest.json');
+  const isVersion = url.pathname.endsWith('/version.json');
+  const isManifest = url.pathname.endsWith('/manifest.json');
+
+  if(isVersion){
+    event.respondWith(new Response('{"version":"1.4.2","updated":"2026-09-17","notes":"Stable navigation fix"}',{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}}));
+    return;
+  }
 
   if(isIndex){
     event.respondWith(
@@ -31,7 +37,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  if(isAppScript || isMeta){
+  if(isAppScript || isManifest){
     event.respondWith(
       fetch(new Request(req.url,{cache:'no-store'})).then(res=>{
         const copy=res.clone();
