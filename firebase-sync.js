@@ -17,3 +17,15 @@
   async function start(){try{await loadSDK();if(!window.firebase||!firebase.auth||!firebase.firestore)throw new Error('Firebase SDK incomplete');if(!firebase.apps.length)firebase.initializeApp(CFG);auth=firebase.auth();db=firebase.firestore();await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);auth.onAuthStateChanged(async user=>{if(!user){cloudReady=false;return;}cloudReady=true;wrapSave();try{await initialSync();}catch(e){console.warn('Initial cloud sync unavailable:',e);}});setInterval(cloudSave,5000);window.addEventListener('online',cloudSave);}catch(e){console.warn('Automatic cloud sync unavailable:',e.message);wrapSave();}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(start,0),{once:true});else setTimeout(start,0);
 })();
+
+/* Keep the report-card subject list complete on existing installations. */
+(function(){try{
+  const extra=['Health and Physical Education','Art Education'];
+  const classes=['Nursery','LKG','UKG',...Array.from({length:12},(_,i)=>'Class '+(i+1))];
+  const data=JSON.parse(localStorage.getItem('sbvm2_subjects')||'{}');
+  classes.forEach(c=>{
+    if(!Array.isArray(data[c])) data[c]=c==='Nursery'||c==='LKG'||c==='UKG'?['Hindi','English','Maths','EVS']:['Hindi','English','Mathematics','Science','Social Science'];
+    extra.forEach(s=>{if(!data[c].includes(s))data[c].push(s);});
+  });
+  localStorage.setItem('sbvm2_subjects',JSON.stringify(data));
+}catch(e){console.warn('Subject defaults update skipped',e);}})();
