@@ -19,7 +19,7 @@ self.addEventListener('fetch', event => {
   const isManifest = url.pathname.endsWith('/manifest.json');
 
   if(isVersion){
-    event.respondWith(new Response('{"version":"1.4.2","updated":"2026-09-17","notes":"Stable navigation fix"}',{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}}));
+    event.respondWith(new Response('{"version":"1.4.5","updated":"2026-09-17","notes":"Stable release"}',{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}}));
     return;
   }
 
