@@ -1,5 +1,5 @@
-const CACHE_NAME = 'sarasvati-school-v1.4.1';
-const APP_ASSETS = ['./','./index.html','./manifest.json','./version.json','./icon-192.png?v=4','./firebase-login.js?v=2','./firebase-sync.js?v=3'];
+const CACHE_NAME = 'sarasvati-school-v1.4.3';
+const APP_ASSETS = ['./','./index.html','./manifest.json','./version.json','./icon-192.png?v=4','./firebase-login.js?v=3','./firebase-sync.js?v=4'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_ASSETS)).then(() => self.skipWaiting()));
 });
@@ -21,14 +21,9 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(new Request(req.url, {cache:'no-store'})).then(async res => {
         const text = await res.text();
-        let html = text;
-        if(!html.includes('firebase-login.js')){
-          html = html.replace('</body>', '<script src="./firebase-login.js?v=2"></script><script src="./firebase-sync.js?v=3"></script></body>');
-        }
-        html = html.replaceAll('1.0.3','1.4.1').replaceAll('1.4.0','1.4.1');
         const headers = new Headers(res.headers);
         headers.set('content-type','text/html; charset=utf-8');
-        const out = new Response(html,{status:res.status,statusText:res.statusText,headers});
+        const out = new Response(text,{status:res.status,statusText:res.statusText,headers});
         caches.open(CACHE_NAME).then(c=>c.put('./index.html',out.clone()));
         return out;
       }).catch(()=>caches.match('./index.html'))
