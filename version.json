@@ -1,1 +1,1 @@
-{"version":"1.4.3","updated":"2026-09-17","notes":"Automatic mobile-laptop cloud sync enabled with the active Firebase web app configuration"}
+{"version":"1.4.4","updated":"2026-09-17","notes":"Fixed navigation returning to home during Firebase cloud sync"}
