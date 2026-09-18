@@ -115,6 +115,8 @@
   }
   async function restoreFromCloud(){
     if(!cloudReady)throw new Error('पहले School Result Login करें।');
+    const local=localData();
+    recoverySave(local);
     const ref=userRef();
     const snap=await ref.get();
     if(!snap.exists)throw new Error('इस account के cloud में कोई saved school data नहीं मिला।');
