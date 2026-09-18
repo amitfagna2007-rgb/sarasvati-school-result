@@ -39,12 +39,12 @@
 <h2>📜 Studying Certificate</h2>
 <p class="muted">विद्यार्थी चुनें और certificate अपने-आप तैयार करें।</p>
 <div class="grid">
-<select id="certStudent"></select>
-<input id="certNo" placeholder="Certificate No.">
-<input id="certDate" type="date">
-<input id="certPurpose" placeholder="Purpose, जैसे Scholarship / Admission">
-<input id="certSession" value="2026–27" placeholder="Academic Session">
-<input id="certDob" type="date">
+<div><label><b>विद्यार्थी (Student)</b></label><select id="certStudent"></select></div>
+<div><label><b>Certificate No. (प्रमाण-पत्र संख्या)</b></label><input id="certNo" placeholder="Certificate No."></div>
+<div><label><b>Certificate Date (आज की/जारी करने की तारीख)</b></label><input id="certDate" type="date"></div>
+<div><label><b>Purpose (किस काम के लिए)</b></label><input id="certPurpose" placeholder="जैसे Scholarship / Admission"></div>
+<div><label><b>Academic Session (शैक्षणिक सत्र)</b></label><input id="certSession" value="2026–27" placeholder="Academic Session"></div>
+<div><label><b>Date of Birth / DOB (जन्म तिथि)</b></label><input id="certDob" type="date"></div>
 </div><br>
 <div class="card">
 <h3>Student Conduct</h3>
@@ -191,8 +191,12 @@ function renderCertificateSelectors(){
   let old=e.value;
   e.innerHTML=students.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(s=>`<option value="${esc(s.id)}">${esc(s.name)} — ${esc(s.cls)} ${esc(s.sec)} / ${esc(s.roll)}</option>`).join('');
   if(old&&students.some(s=>s.id===old))e.value=old;
-  let s=students.find(x=>x.id===e.value),dob=document.getElementById('certDob');
+  let s=students.find(x=>x.id===e.value),dob=document.getElementById('certDob'),date=document.getElementById('certDate');
   if(s&&dob&&!dob.value&&s.dob)dob.value=s.dob;
+  if(date&&!date.value){
+    const now=new Date();
+    date.value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  }
 }
 function certificateConduct(){
   let e=document.querySelector('input[name="conduct"]:checked');
