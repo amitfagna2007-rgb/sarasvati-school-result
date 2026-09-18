@@ -48,8 +48,8 @@
     return {students:[...students.values()],subjects,marks:[...marks.values()]};
   }
   function same(a,b){return JSON.stringify(clean(a))===JSON.stringify(clean(b));}
-  function recoverySave(){
-    try{localStorage.setItem('sbvm2_recovery_backup',JSON.stringify({savedAt:new Date().toISOString(),...localData()}));}catch(e){}
+  function recoverySave(d){
+    try{const data=clean(d||localData());if(!hasData(data))return;localStorage.setItem('sbvm2_recovery_backup',JSON.stringify({savedAt:new Date().toISOString(),...data}));}catch(e){}
   }
   function notifyUpdate(){window.dispatchEvent(new CustomEvent('sbvm-cloud-update'));}
 
@@ -63,9 +63,9 @@
     if(!cloudReady||saving)return false;
     saving=true;
     try{
-      recoverySave();
       const ref=userRef();
       const local=localData();
+      recoverySave(local);
       const snap=await ref.get();
       if(snap.exists){
         const merged=mergeCloudAndLocal(snap.data(),local);
@@ -83,7 +83,7 @@
   async function initialSync(){
     const ref=userRef();
     const local=localData();
-    recoverySave();
+    recoverySave(local);
     const snap=await ref.get();
     if(snap.exists){
       const cloud=clean(snap.data());
@@ -99,7 +99,7 @@
       if(!s.exists||saving)return;
       const incoming=clean(s.data()),now=localData(),merged=mergeCloudAndLocal(incoming,now);
       if(hasData(merged)&&!same(merged,now)){
-        recoverySave();
+        recoverySave(merged);
         putLocal(merged);
         notifyUpdate();
       }
