@@ -113,7 +113,19 @@
     wrapped._autoCloudWrapped=true;
     window.save=wrapped;
   }
-  function expose(){window.sbvmCloud={get ready(){return cloudReady;},save:cloudSave,status:()=>({ready:cloudReady,loggedIn:!!(auth&&auth.currentUser),uid:auth&&auth.currentUser?auth.currentUser.uid:null})};}
+  async function restoreFromCloud(){
+    if(!cloudReady)throw new Error('पहले School Result Login करें।');
+    const ref=userRef();
+    const snap=await ref.get();
+    if(!snap.exists)throw new Error('इस account के cloud में कोई saved school data नहीं मिला।');
+    const cloud=clean(snap.data());
+    if(!hasData(cloud))throw new Error('Cloud record मिला, लेकिन उसमें विद्यार्थी/अंक/विषय data नहीं है।');
+    recoverySave(cloud);
+    putLocal(cloud);
+    notifyUpdate();
+    return {students:cloud.students.length,marks:cloud.marks.length,subjects:Object.keys(cloud.subjects).length};
+  }
+  function expose(){window.sbvmCloud={get ready(){return cloudReady;},save:cloudSave,restore:restoreFromCloud,status:()=>({ready:cloudReady,loggedIn:!!(auth&&auth.currentUser),uid:auth&&auth.currentUser?auth.currentUser.uid:null})};}
   window.addEventListener('sbvm-local-save',()=>{recoverySave();cloudSave();});
 
   async function start(){
