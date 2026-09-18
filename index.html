@@ -77,10 +77,10 @@
 </div>
 <div id="student360View"></div>
 </section>
-<section id="backup" class="page"><div class="card"><h2>💾 Backup / Restore</h2><p>Backup डाउनलोड करके सुरक्षित रखें। दूसरे कंप्यूटर पर Restore किया जा सकता है।</p><button onclick="backup()">⬇️ Backup डाउनलोड</button><label><input type="file" id="restoreFile" accept=".json" onchange="restore(this.files[0])"> Backup Restore करें</label></div><div class="card"><h2>🔄 App Update</h2><p>App का code online update हो सकता है। विद्यार्थी, विषय और अंक <b>localStorage</b> में अलग रहते हैं, इसलिए सामान्य code update से data delete नहीं होता।</p><div class="row"><strong>Installed version:</strong> <span id="appVersion">1.4.16</span><button class="green" onclick="checkForUpdate(true)">🔍 Check for Update</button></div><div id="updateStatus" class="notice">Update system तैयार है।</div></div></section>
+<section id="backup" class="page"><div class="card"><h2>💾 Backup / Restore</h2><p>Backup डाउनलोड करके सुरक्षित रखें। दूसरे कंप्यूटर पर Restore किया जा सकता है।</p><button onclick="backup()">⬇️ Backup डाउनलोड</button><label><input type="file" id="restoreFile" accept=".json" onchange="restore(this.files[0])"> Backup Restore करें</label></div><div class="card"><h2>🔄 App Update</h2><p>App का code online update हो सकता है। विद्यार्थी, विषय और अंक <b>localStorage</b> में अलग रहते हैं, इसलिए सामान्य code update से data delete नहीं होता।</p><div class="row"><strong>Installed version:</strong> <span id="appVersion">1.4.17</span><button class="green" onclick="checkForUpdate(true)">🔍 Check for Update</button></div><div id="updateStatus" class="notice">Update system तैयार है।</div></div></section>
 </main>
 <script>
-const APP_VERSION='1.4.16';
+const APP_VERSION='1.4.17';
 const CLASSES=['Nursery','LKG','UKG',...Array.from({length:12},(_,i)=>'Class '+(i+1))];
 const defaultSubjects={Nursery:['Hindi','English','Maths','EVS'],LKG:['Hindi','English','Maths','EVS'],UKG:['Hindi','English','Maths','EVS']};
 function readJSON(key,fallback){
@@ -137,32 +137,53 @@ function fillExams(){let cls=rc.value,sec=rsec.value,a=examsFor(cls,sec);rexam.i
 function renderResult(){fillExams();let cls=rc.value,sec=rsec.value,ex=rexam.value;if(!ex){resultTable.innerHTML='<p class="muted">इस कक्षा/सेक्शन के लिए कोई परीक्षा नहीं मिली।</p>';return;}let subs=academicSubjects(cls),a=students.filter(s=>s.cls===cls&&s.sec===sec),rows=a.map(s=>{let rec=subs.map(sub=>marks.find(m=>m.studentId===s.id&&m.cls===cls&&m.sec===sec&&m.exam===ex&&m.subject===sub)).filter(Boolean);let complete=subs.length>0&&rec.length===subs.length;let total=rec.reduce((z,m)=>z+Number(m.score),0),max=rec.reduce((z,m)=>z+Number(m.total),0),pct=max?total/max*100:0;return {...s,rec,total,max,pct,complete};}).sort((x,y)=>y.pct-x.pct||y.total-x.total||String(x.roll).localeCompare(String(y.roll),undefined,{numeric:true}));let rank=0,lastPct=null,seen=0;rows.forEach(r=>{if(r.complete){seen++;if(lastPct===null||Math.abs(r.pct-lastPct)>1e-9){rank=seen;lastPct=r.pct;}r.rank=rank;}else r.rank='—';});let h='<div class="scroll"><table><tr><th>रैंक</th><th>रोल</th><th>नाम</th><th>कुल अंक</th><th>प्रतिशत</th><th>स्थिति</th></tr>';rows.forEach(r=>h+=`<tr><td>${r.rank}</td><td>${esc(r.roll)}</td><td class="left">${esc(r.name)}</td><td>${r.complete?`${r.total}/${r.max}`:'—'}</td><td>${r.complete?r.pct.toFixed(2)+'%':'—'}</td><td>${r.complete?'पूर्ण':'अपूर्ण'}</td></tr>`);resultTable.innerHTML=h+'</table></div>';}
 function downloadResultPDF(){if(!resultTable.innerHTML.trim())renderResult();setTimeout(()=>{let w=window.open('','_blank');if(!w)return alert('Popup blocked है। Browser में popup allow करें।');w.document.write('<!doctype html><html lang="hi"><head><meta charset="utf-8"><title>कक्षा परिणाम और रैंक</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:Arial,"Noto Sans Devanagari",sans-serif;margin:20px;color:#17202a}h1{text-align:center;font-size:22px;margin:0 0 6px}h2{text-align:center;font-size:18px;margin:0 0 16px}.scroll{overflow:visible}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #555;padding:8px;text-align:center}th{background:#eee}td.left{text-align:left}@media print{body{margin:10mm}table{font-size:12px}tr{break-inside:avoid}}</style></head><body><h1>SARASVATI BAL VIDHYA MANDIR SAKARGHATA</h1><h2>कक्षा परिणाम और रैंक</h2>'+resultTable.innerHTML+'</body></html>');w.document.close();w.focus();setTimeout(()=>w.print(),300);},100);}
 function dash(){ds.textContent=students.length;dc.textContent=new Set(students.map(s=>s.cls)).size;dt.textContent=new Set(marks.map(m=>m.exam)).size;dr.textContent=marks.length;}
-function renderReportSelectors(){let old=rep.value;rep.innerHTML=students.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(s=>`<option value="${esc(s.id)}">${esc(s.name)} — ${esc(s.cls)} ${esc(s.sec)} / ${esc(s.roll)}</option>`).join('');if(old&&students.some(s=>s.id===old))rep.value=old;let s=students.find(x=>x.id===rep.value),a=s?examsFor(s.cls,s.sec):[];let oldE=repExam.value;repExam.innerHTML='<option value="">परीक्षा चुनें</option>'+a.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');if(a.includes(oldE))repExam.value=oldE;else if(a.length)repExam.value=a[0];}
+function renderReportSelectors(){
+  const repEl=document.getElementById('rep');
+  const examEl=document.getElementById('repExam');
+  if(!repEl||!examEl)return;
+  const old=repEl.value;
+  repEl.innerHTML=students.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(st=>`<option value="${esc(st.id)}">${esc(st.name)} — ${esc(st.cls)} ${esc(st.sec)} / ${esc(st.roll)}</option>`).join('');
+  if(old&&students.some(st=>st.id===old))repEl.value=old;
+  const st=students.find(x=>x.id===repEl.value);
+  const exams=st?examsFor(st.cls,st.sec):[];
+  const oldE=examEl.value;
+  examEl.innerHTML='<option value="">परीक्षा चुनें</option>'+exams.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  if(exams.includes(oldE))examEl.value=oldE;
+  else if(exams.length)examEl.value=exams[0];
+}
 function gradeFor(pct){if(pct>=90)return'A+';if(pct>=80)return'A';if(pct>=70)return'B+';if(pct>=60)return'B';if(pct>=50)return'C';if(pct>=40)return'D';return'E';}
 function renderReport(){
-  let s=students.find(x=>x.id===rep.value);
-  if(!s)return reportCard.innerHTML='<p class="muted">पहले विद्यार्थी चुनें।</p>';
-  let selectedExam=repExam.value,subs=academicSubjects(s.cls);
-  if(!selectedExam)return reportCard.innerHTML='<p class="muted">पहले परीक्षा चुनें।</p>';
-  let a=marks.filter(m=>m.studentId===s.id&&m.exam===selectedExam&&subs.includes(m.subject));
-  if(!a.length)return reportCard.innerHTML='<p class="muted">इस परीक्षा में इस विद्यार्थी के अंक अभी दर्ज नहीं हैं।</p>';
+  const repEl=document.getElementById('rep');
+  const examEl=document.getElementById('repExam');
+  const out=document.getElementById('reportCard');
+  if(!out)return;
+  const s=students.find(x=>x.id===repEl?.value);
+  if(!s){out.innerHTML='<p class="muted">पहले विद्यार्थी चुनें।</p>';return;}
+  const selectedExam=examEl?.value||'';
+  const subs=academicSubjects(s.cls);
+  if(!selectedExam){out.innerHTML='<p class="muted">पहले परीक्षा चुनें।</p>';return;}
+  if(!subs.length){out.innerHTML='<p class="muted">इस कक्षा में कोई academic subject निर्धारित नहीं है।</p>';return;}
+  const a=marks.filter(m=>m.studentId===s.id&&m.exam===selectedExam&&subs.includes(m.subject));
+  if(!a.length){out.innerHTML='<p class="muted">इस परीक्षा में इस विद्यार्थी के academic marks अभी दर्ज नहीं हैं।</p>';return;}
 
-  let total=a.reduce((z,m)=>z+Number(m.score),0),max=a.reduce((z,m)=>z+Number(m.total),0),pct=max?total/max*100:0;
-  let rows=subs.map(sub=>{
-    let m=a.find(x=>x.subject===sub);
-    let gp=m&&m.total?gradeFor(Number(m.score)/Number(m.total)*100):'—';
+  const total=a.reduce((z,m)=>z+Number(m.score),0);
+  const max=a.reduce((z,m)=>z+Number(m.total),0);
+  const pct=max?total/max*100:0;
+  const rows=subs.map(sub=>{
+    const m=a.find(x=>x.subject===sub);
+    const gp=m&&m.total?gradeFor(Number(m.score)/Number(m.total)*100):'—';
     return `<tr><td class="left">${esc(sub)}</td><td>${m?esc(m.total):'—'}</td><td>${m?esc(m.score):'—'}</td><td>${gp}</td></tr>`;
   }).join('');
 
-  let clsStudents=students.filter(x=>x.cls===s.cls&&x.sec===s.sec);
-  let rankRows=clsStudents.map(x=>{
-    let rr=subs.map(sub=>marks.find(m=>m.studentId===x.id&&m.cls===s.cls&&m.sec===s.sec&&m.exam===selectedExam&&m.subject===sub)).filter(Boolean);
-    let mx=rr.reduce((z,m)=>z+Number(m.total),0),tt=rr.reduce((z,m)=>z+Number(m.score),0);
-    return {...x,p:mx?tt/mx*100:0,complete:subs.length>0&&rr.length===subs.length};
+  const clsStudents=students.filter(x=>x.cls===s.cls&&x.sec===s.sec);
+  const rankRows=clsStudents.map(x=>{
+    const rr=subs.map(sub=>marks.find(m=>m.studentId===x.id&&m.cls===s.cls&&m.sec===s.sec&&m.exam===selectedExam&&m.subject===sub)).filter(Boolean);
+    const mx=rr.reduce((z,m)=>z+Number(m.total),0),tt=rr.reduce((z,m)=>z+Number(m.score),0);
+    return {...x,p:mx?tt/mx*100:0,complete:rr.length===subs.length};
   }).filter(x=>x.complete).sort((x,y)=>y.p-x.p||String(x.roll).localeCompare(String(y.roll),undefined,{numeric:true}));
-  let rank=rankRows.findIndex(x=>x.id===s.id)+1;
+  const rank=rankRows.findIndex(x=>x.id===s.id)+1;
 
-  reportCard.innerHTML=`<div class="report-sheet">
+  out.innerHTML=`<div class="report-sheet">
     <div class="report-head">
       <img class="report-logo" src="./icon-192.png?v=4" alt="School Logo">
       <div class="school">SARASVATI BAL VIDHYA MANDIR SAKARGHATA</div>
@@ -179,13 +200,11 @@ function renderReport(){
       <div class="student-line"><b>Examination</b><span>${esc(selectedExam)}</span></div>
     </div>
     <div class="report-section-title">Academic Performance</div>
-    <div class="report-marks">
-      <table>
-        <tr><th>Subject</th><th>Maximum Marks</th><th>Marks Obtained</th><th>Grade</th></tr>
-        ${rows}
-        <tr><td class="left">TOTAL</td><td>${max}</td><td>${total}</td><td>${gradeFor(pct)}</td></tr>
-      </table>
-    </div>
+    <div class="report-marks"><table>
+      <tr><th>Subject</th><th>Maximum Marks</th><th>Marks Obtained</th><th>Grade</th></tr>
+      ${rows}
+      <tr><td class="left">TOTAL</td><td>${max}</td><td>${total}</td><td>${gradeFor(pct)}</td></tr>
+    </table></div>
     <div class="result-summary">
       <div class="summary-box"><small>Total Marks</small><strong>${total}/${max}</strong></div>
       <div class="summary-box"><small>Percentage</small><strong>${pct.toFixed(2)}%</strong></div>
@@ -274,7 +293,7 @@ function backup(){let data={app:'SBVM Result',version:APP_VERSION,exportedAt:new
 function restore(file){if(!file)return;let r=new FileReader();r.onload=()=>{try{let text=String(r.result||'').replace(/^\\uFEFF/,'').trim();if(!text)throw new Error('empty');let d=JSON.parse(text);let src=d&&d.data&&typeof d.data==='object'?d.data:d;let st=Array.isArray(src.students)?src.students:(Array.isArray(src.sbvm2_students)?src.sbvm2_students:null);let su=src.subjects&&typeof src.subjects==='object'?src.subjects:null;let mk=Array.isArray(src.marks)?src.marks:(Array.isArray(src.sbvm2_marks)?src.sbvm2_marks:null);if(!st||!su||!mk)throw new Error('invalid');if(!confirm('Restore करने से current data replace होगा। Continue?'))return;students=st;subjects=su;marks=mk;save();refresh();document.getElementById('restoreFile').value='';alert('Backup restore हो गया।\\nविद्यार्थी: '+students.length+'\\nअंक रिकॉर्ड: '+marks.length);}catch(e){document.getElementById('restoreFile').value='';console.error('Backup restore failed:',e);alert('Backup upload नहीं हो पाया।\\n\\nकारण: Backup file का format पहचाना नहीं गया या file खराब है।\\n\\nकृपया इसी app से डाउनलोड की गई .json backup file चुनें।');}};r.onerror=()=>{document.getElementById('restoreFile').value='';alert('Backup file पढ़ी नहीं जा सकी।');};r.readAsText(file);}
 function toggleLang(){lang=lang==='hi'?'en':'hi';let en=lang==='en';document.getElementById('langBtn').textContent=en?'हिंदी / English':'हिंदी / English';document.getElementById('subtitle').textContent=en?'Student • Marks • Rank • Report Card Management':'Student • Marks • Rank • Report Card Management';document.title=en?'Sarasvati School Result System':'Sarasvati Bal Vidhya Mandir - School Result System';}
 let swReloading=false;
-async function registerSW(){if(!('serviceWorker' in navigator))return;try{await navigator.serviceWorker.register('./sw.js?v=1.4.16');navigator.serviceWorker.addEventListener('controllerchange',()=>{if(swReloading)return;swReloading=true;location.reload();});}catch(e){console.warn('SW registration failed',e);}}
+async function registerSW(){if(!('serviceWorker' in navigator))return;try{await navigator.serviceWorker.register('./sw.js?v=1.4.17');navigator.serviceWorker.addEventListener('controllerchange',()=>{if(swReloading)return;swReloading=true;location.reload();});}catch(e){console.warn('SW registration failed',e);}}
 async function checkForUpdate(manual){let status=document.getElementById('updateStatus');try{let res=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});if(!res.ok)throw new Error('version check failed');let remote=await res.json();let rv=String(remote.version||APP_VERSION),iv=APP_VERSION;if(rv===iv){if(manual)status.textContent='आपके पास latest version 1.4.16 है।';return;}status.textContent='नया version '+rv+' उपलब्ध है। Update शुरू हो रहा है...';if('serviceWorker' in navigator){let reg=await navigator.serviceWorker.getRegistration('./');if(!reg)reg=await navigator.serviceWorker.register('./sw.js?v=1.4.15');await reg.update();if(reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'});return;}if(reg.installing){let w=reg.installing;w.addEventListener('statechange',()=>{if(w.state==='installed'&&navigator.serviceWorker.controller){w.postMessage({type:'SKIP_WAITING'});}});return;}location.reload();}}catch(e){if(manual)status.textContent='Update check नहीं हो पाया। Internet connection जाँचें और फिर कोशिश करें।';}}
 window.addEventListener('load',init);
 </script>
