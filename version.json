@@ -1,1 +1,1 @@
-{"version":"1.4.16","updated":"2026-09-18","notes":"Separated Marks Entry and normal Report Card; Physical Education and Art Education stay in marks entry only; simplified report card summary"}
+{"version":"1.4.17","updated":"2026-09-18","notes":"Fixed report card opening/rendering and separated academic report subjects from marks-only subjects"}
