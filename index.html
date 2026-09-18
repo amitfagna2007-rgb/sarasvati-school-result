@@ -37,7 +37,7 @@ let subjects=JSON.parse(localStorage.getItem('sbvm2_subjects')||'{}');
 let marks=JSON.parse(localStorage.getItem('sbvm2_marks')||'[]');
 let lang='hi';
 CLASSES.forEach(c=>{if(!subjects[c])subjects[c]=defaultSubjects[c]||['Hindi','English','Mathematics','Science','Social Science'];});
-function save(){localStorage.setItem('sbvm2_students',JSON.stringify(students));localStorage.setItem('sbvm2_subjects',JSON.stringify(subjects));localStorage.setItem('sbvm2_marks',JSON.stringify(marks));dash();}
+function save(){localStorage.setItem('sbvm2_students',JSON.stringify(students));localStorage.setItem('sbvm2_subjects',JSON.stringify(subjects));localStorage.setItem('sbvm2_marks',JSON.stringify(marks));dash();window.dispatchEvent(new Event('sbvm-local-save'));}
 function esc(v){return String(v??'').replace(/[&<>'\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
 function opts(id,all=true){let e=document.getElementById(id);e.innerHTML=(all?'<option value="">सभी कक्षाएँ</option>':'')+CLASSES.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');}
 function init(){opts('sc',false);opts('mc',false);opts('rc',false);opts('subClass',false);opts('filterClass',true);filterClass.value='';sc.value='Class 1';mc.value='Class 1';rc.value='Class 1';subClass.value='Class 1';refresh();loadMarks(false);registerSW();setTimeout(()=>checkForUpdate(false),1200);}
