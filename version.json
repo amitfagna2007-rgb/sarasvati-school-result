@@ -1,1 +1,1 @@
-{"version":"1.4.13","updated":"2026-09-18","notes":"Clarified Studying Certificate DOB and certificate date fields; certificate date defaults to today"}
+{"version":"1.4.16","updated":"2026-09-18","notes":"Separated Marks Entry and normal Report Card; Physical Education and Art Education stay in marks entry only; simplified report card summary"}
