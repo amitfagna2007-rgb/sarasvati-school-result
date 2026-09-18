@@ -1,33 +1,138 @@
 (function(){
   const CFG={apiKey:'AIzaSyBgpGHrpdWGgIyG0wYSYDtBOtud7SASJlQ',authDomain:'sarasvati-school-result.firebaseapp.com',projectId:'sarasvati-school-result',storageBucket:'sarasvati-school-result.firebasestorage.app',messagingSenderId:'178995934524',appId:'1:178995934524:web:a290e6ccd3c63811221a39',measurementId:'G-HF2E5D0WSC'};
   const SDK=['https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js','https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js','https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js'];
-  let db=null,auth=null,cloudReady=false,saving=false,applying=false,started=false;
+  let db=null,auth=null,cloudReady=false,saving=false,started=false,unsub=null;
+
   function addScript(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=resolve;s.onerror=()=>reject(new Error('Firebase CDN failed'));document.head.appendChild(s);});}
   async function loadSDK(){for(const src of SDK){if(src.includes('firebase-app')&&window.firebase&&firebase.initializeApp)continue;if(src.includes('firebase-auth')&&window.firebase&&firebase.auth)continue;if(src.includes('firebase-firestore')&&window.firebase&&firebase.firestore)continue;await addScript(src);}}
-  function localData(){return {students:JSON.parse(localStorage.getItem('sbvm2_students')||'[]'),subjects:JSON.parse(localStorage.getItem('sbvm2_subjects')||'{}'),marks:JSON.parse(localStorage.getItem('sbvm2_marks')||'[]')};}
-  function putLocal(d){localStorage.setItem('sbvm2_students',JSON.stringify(Array.isArray(d.students)?d.students:[]));localStorage.setItem('sbvm2_subjects',JSON.stringify(d.subjects&&typeof d.subjects==='object'?d.subjects:{}));localStorage.setItem('sbvm2_marks',JSON.stringify(Array.isArray(d.marks)?d.marks:[]));}
-  function clean(d){return {students:d.students||[],subjects:d.subjects||{},marks:d.marks||[]};}
+
+  function localData(){
+    const read=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch(e){return f;}};
+    return {students:read('sbvm2_students',[]),subjects:read('sbvm2_subjects',{}),marks:read('sbvm2_marks',[])};
+  }
+  function clean(d){
+    d=d||{};
+    return {
+      students:Array.isArray(d.students)?d.students:[],
+      subjects:d.subjects&&typeof d.subjects==='object'?d.subjects:{},
+      marks:Array.isArray(d.marks)?d.marks:[]
+    };
+  }
+  function putLocal(d){
+    d=clean(d);
+    localStorage.setItem('sbvm2_students',JSON.stringify(d.students));
+    localStorage.setItem('sbvm2_subjects',JSON.stringify(d.subjects));
+    localStorage.setItem('sbvm2_marks',JSON.stringify(d.marks));
+  }
+  function hasData(d){
+    d=clean(d);
+    return d.students.length>0 || d.marks.length>0 || Object.keys(d.subjects).some(k=>Array.isArray(d.subjects[k])&&d.subjects[k].length);
+  }
+  function mergeCloudAndLocal(cloud,local){
+    const c=clean(cloud),l=clean(local);
+    const students=new Map((c.students||[]).map(x=>[String(x.id),x]));
+    (l.students||[]).forEach(x=>students.set(String(x.id),x));
+    const marks=new Map((c.marks||[]).map(x=>[[
+      x.studentId||'',x.cls||'',x.sec||'',x.exam||'',String(x.subject||'').trim().toLowerCase()
+    ].join('|'),x]));
+    (l.marks||[]).forEach(x=>marks.set([
+      x.studentId||'',x.cls||'',x.sec||'',x.exam||'',String(x.subject||'').trim().toLowerCase()
+    ].join('|'),x));
+    const subjects=JSON.parse(JSON.stringify(c.subjects||{}));
+    Object.keys(l.subjects||{}).forEach(cls=>{
+      if(!Array.isArray(subjects[cls]))subjects[cls]=[];
+      (l.subjects[cls]||[]).forEach(sub=>{
+        if(!subjects[cls].some(x=>String(x).trim().toLowerCase()===String(sub).trim().toLowerCase()))subjects[cls].push(sub);
+      });
+    });
+    return {students:[...students.values()],subjects,marks:[...marks.values()]};
+  }
   function same(a,b){return JSON.stringify(clean(a))===JSON.stringify(clean(b));}
+  function recoverySave(){
+    try{localStorage.setItem('sbvm2_recovery_backup',JSON.stringify({savedAt:new Date().toISOString(),...localData()}));}catch(e){}
+  }
   function notifyUpdate(){window.dispatchEvent(new CustomEvent('sbvm-cloud-update'));}
-  function merge(a,b){const out=clean(a),local=clean(b);const sm=new Map((out.students||[]).map(x=>[x.id,x]));(local.students||[]).forEach(x=>sm.set(x.id,x));const mm=new Map((out.marks||[]).map(x=>[[x.studentId||'',x.cls||'',x.sec||'',x.exam||'',x.subject||''].join('|'),x]));(local.marks||[]).forEach(x=>mm.set([x.studentId||'',x.cls||'',x.sec||'',x.exam||'',x.subject||''].join('|'),x));const subs=JSON.parse(JSON.stringify(out.subjects||{}));Object.keys(local.subjects||{}).forEach(c=>{if(!subs[c])subs[c]=local.subjects[c];else(local.subjects[c]||[]).forEach(s=>{if(!subs[c].includes(s))subs[c].push(s);});});return {students:[...sm.values()],subjects:subs,marks:[...mm.values()]};}
-  function userRef(){const u=auth&&auth.currentUser;if(!u)throw new Error('Not authenticated');return db.collection('users').doc(u.uid).collection('schoolData').doc('main');}
-  async function cloudSave(){if(!cloudReady||saving||applying)return false;saving=true;try{const d=localData();await userRef().set({...d,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});}catch(e){console.warn('Cloud sync save failed',e);return false;}finally{saving=false;}return true;}
-  async function initialSync(){const ref=userRef();const snap=await ref.get();const local=localData();if(snap.exists){const merged=merge(snap.data(),local);if(!same(merged,local)){putLocal(merged);notifyUpdate();}await ref.set({...merged,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});}else await ref.set({...local,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});ref.onSnapshot(s=>{if(!s.exists||saving)return;const incoming=clean(s.data()),now=localData();if(!same(incoming,now)){putLocal(incoming);notifyUpdate();}});}
-  function wrapSave(){if(typeof window.save!=='function'||window.save._autoCloudWrapped)return;const original=window.save;const wrapped=function(){original();setTimeout(()=>cloudSave(),0);};wrapped._autoCloudWrapped=true;window.save=wrapped;}
+
+  function userRef(){
+    const u=auth&&auth.currentUser;
+    if(!u)throw new Error('Not authenticated');
+    return db.collection('users').doc(u.uid).collection('schoolData').doc('main');
+  }
+
+  async function cloudSave(){
+    if(!cloudReady||saving)return false;
+    saving=true;
+    try{
+      recoverySave();
+      const ref=userRef();
+      const local=localData();
+      const snap=await ref.get();
+      if(snap.exists){
+        const merged=mergeCloudAndLocal(snap.data(),local);
+        putLocal(merged);
+        await ref.set({...merged,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+        notifyUpdate();
+      }else{
+        await ref.set({...local,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+      }
+      return true;
+    }catch(e){console.warn('Cloud sync save failed',e);return false;}
+    finally{saving=false;}
+  }
+
+  async function initialSync(){
+    const ref=userRef();
+    const local=localData();
+    recoverySave();
+    const snap=await ref.get();
+    if(snap.exists){
+      const cloud=clean(snap.data());
+      const merged=mergeCloudAndLocal(cloud,local);
+      // Never replace non-empty local data with an empty/stale cloud snapshot.
+      if(hasData(merged) && !same(merged,local)){putLocal(merged);notifyUpdate();}
+      if(hasData(merged))await ref.set({...merged,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+    }else if(hasData(local)){
+      await ref.set({...local,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+    }
+    if(unsub)unsub();
+    unsub=ref.onSnapshot(s=>{
+      if(!s.exists||saving)return;
+      const incoming=clean(s.data()),now=localData(),merged=mergeCloudAndLocal(incoming,now);
+      if(hasData(merged)&&!same(merged,now)){
+        recoverySave();
+        putLocal(merged);
+        notifyUpdate();
+      }
+    });
+  }
+
+  function wrapSave(){
+    if(typeof window.save!=='function'||window.save._autoCloudWrapped)return;
+    const original=window.save;
+    const wrapped=function(){original();recoverySave();setTimeout(()=>cloudSave(),50);};
+    wrapped._autoCloudWrapped=true;
+    window.save=wrapped;
+  }
   function expose(){window.sbvmCloud={get ready(){return cloudReady;},save:cloudSave,status:()=>({ready:cloudReady,loggedIn:!!(auth&&auth.currentUser),uid:auth&&auth.currentUser?auth.currentUser.uid:null})};}
-  window.addEventListener('sbvm-local-save',()=>cloudSave());
-  async function start(){if(started)return;started=true;expose();try{await loadSDK();if(!window.firebase||!firebase.auth||!firebase.firestore)throw new Error('Firebase SDK incomplete');if(!firebase.apps.length)firebase.initializeApp(CFG);auth=firebase.auth();db=firebase.firestore();await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);auth.onAuthStateChanged(async user=>{if(!user){cloudReady=false;expose();return;}cloudReady=true;expose();wrapSave();try{await initialSync();}catch(e){console.warn('Initial cloud sync unavailable:',e);}});setInterval(cloudSave,5000);window.addEventListener('online',cloudSave);}catch(e){console.warn('Automatic cloud sync unavailable:',e.message);wrapSave();}}
+  window.addEventListener('sbvm-local-save',()=>{recoverySave();cloudSave();});
+
+  async function start(){
+    if(started)return;
+    started=true;expose();
+    try{
+      await loadSDK();
+      if(!window.firebase||!firebase.auth||!firebase.firestore)throw new Error('Firebase SDK incomplete');
+      if(!firebase.apps.length)firebase.initializeApp(CFG);
+      auth=firebase.auth();db=firebase.firestore();
+      await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      auth.onAuthStateChanged(async user=>{
+        if(!user){cloudReady=false;expose();return;}
+        cloudReady=true;expose();wrapSave();
+        try{await initialSync();}catch(e){console.warn('Initial cloud sync unavailable:',e);}
+      });
+      setInterval(()=>cloudSave(),10000);
+      window.addEventListener('online',cloudSave);
+    }catch(e){console.warn('Automatic cloud sync unavailable:',e.message);wrapSave();}
+  }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(start,0),{once:true});else setTimeout(start,0);
 })();
-
-/* Keep the report-card subject list complete on existing installations. */
-(function(){try{
-  const extra=['Health and Physical Education','Art Education'];
-  const classes=['Nursery','LKG','UKG',...Array.from({length:12},(_,i)=>'Class '+(i+1))];
-  const data=JSON.parse(localStorage.getItem('sbvm2_subjects')||'{}');
-  classes.forEach(c=>{
-    if(!Array.isArray(data[c])) data[c]=c==='Nursery'||c==='LKG'||c==='UKG'?['Hindi','English','Maths','EVS']:['Hindi','English','Mathematics','Science','Social Science'];
-    extra.forEach(s=>{if(!data[c].includes(s))data[c].push(s);});
-  });
-  localStorage.setItem('sbvm2_subjects',JSON.stringify(data));
-}catch(e){console.warn('Subject defaults update skipped',e);}})();
