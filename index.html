@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173f67">
-<meta name="app-version" content="1.4.16">
+<meta name="app-version" content="1.4.17">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=4">
 <link rel="apple-touch-icon" href="icon-192.png?v=4">
@@ -18,7 +18,7 @@
 <script src="./firebase-login.js?v=3"></script>
 <script src="./firebase-sync.js?v=4"></script>
 <header><div><h1 id="schoolTitle">SARASVATI BAL VIDHYA MANDIR SAKARGHATA</h1><p id="subtitle">Student • Marks • Rank • Report Card Management</p></div><div class="no-print"><button onclick="toggleLang()" id="langBtn">हिंदी / English</button></div></header>
-<nav class="no-print"><button onclick="page('home')">🏠 मुख्य पेज</button><button onclick="page('students')">👨‍🎓 विद्यार्थी</button><button onclick="page('subjects')">📚 विषय</button><button onclick="page('marks')">📝 अंक दर्ज करें</button><button onclick="page('result')">🏆 परिणाम / रैंक</button><button onclick="page('report')">📄 रिपोर्ट कार्ड</button><button onclick="page('backup')">💾 Backup / Update</button><button onclick="page('certificate')">📜 Studying Certificate</button><button onclick="page('student360')">👤 Student 360°</button></nav>
+<nav class="no-print"><button onclick="page('home')">🏠 मुख्य पेज</button><button onclick="page('students')">👨‍🎓 विद्यार्थी</button><button onclick="page('subjects')">📚 विषय</button><button onclick="page('marks')">📝 अंक दर्ज करें</button><button onclick="page('result')">🏆 परिणाम / रैंक</button><button onclick="page('report')">📄 रिपोर्ट कार्ड</button><button onclick="page('marksheet')">📑 Marksheet</button><button onclick="page('backup')">💾 Backup / Update</button><button onclick="page('certificate')">📜 Studying Certificate</button><button onclick="page('student360')">👤 Student 360°</button></nav>
 <main>
 <section id="home" class="page active"><section id="quickSearch" class="card no-print">
 <h2>🔎 Smart Student Search</h2>
@@ -34,6 +34,20 @@
 <section id="marks" class="page"><div class="card"><h2>📝 Marks Entry — सभी विषयों के अंक</h2><div class="grid"><select id="mc" onchange="loadMarks(true)"></select><select id="msec" onchange="loadMarks(true)"><option>A</option><option>B</option><option>C</option></select><input id="exam" placeholder="परीक्षा नाम, जैसे Unit Test-1"><select id="msub" onchange="loadMarks(true)"></select><input id="mtotal" type="number" value="100" min="1" placeholder="पूर्णांक"></div><div class="notice">Physical Education और Art Education भी इसी Marks Entry में मिलेंगे। ये दोनों Report Card में नहीं दिखेंगे। एक ही परीक्षा में विषय बदलकर हर विषय के अंक सेव करें। पुराने अंक edit करके फिर से Save किए जा सकते हैं।</div><div class="scroll" id="marksTable"></div></div></section>
 <section id="result" class="page"><div class="card"><h2>🏆 कक्षा परिणाम और रैंक</h2><div class="row"><select id="rc"></select><select id="rsec"><option>A</option><option>B</option><option>C</option></select><select id="rexam"></select><button onclick="renderResult()">परिणाम देखें</button><button class="secondary" onclick="window.print()">🖨️ प्रिंट</button><button class="green" onclick="downloadResultPDF()">📥 परिणाम PDF</button></div><div class="notice">रैंक केवल उन विद्यार्थियों की बनेगी जिनके सभी निर्धारित विषयों के अंक दर्ज हैं। अधूरे रिकॉर्ड को “अपूर्ण” दिखाया जाएगा। बराबर प्रतिशत पर समान रैंक मिलेगी।</div><div id="resultTable"></div></div></section>
 <section id="report" class="page"><div class="card"><h2 class="no-print">📄 विद्यार्थी रिपोर्ट कार्ड</h2><div class="row no-print"><select id="rep"></select><select id="repExam"><option value="">परीक्षा चुनें</option></select><button onclick="renderReport()">रिपोर्ट दिखाएँ</button><button class="secondary" onclick="window.print()">🖨️ प्रिंट</button><button class="green" onclick="downloadReportPDF()">📥 Download PDF</button></div><div class="notice no-print">PDF बटन दबाने पर print window खुलेगा। वहाँ <b>Save as PDF</b> चुनकर normal report card PDF में सेव करें। मोबाइल और लैपटॉप दोनों पर काम करेगा।</div><div id="reportCard"></div></div></section>
+<section id="marksheet" class="page">
+  <div class="card">
+    <h2 class="no-print">📑 विद्यार्थी Marksheet</h2>
+    <div class="row no-print">
+      <select id="msheetStudent"></select>
+      <select id="msheetExam"><option value="">परीक्षा चुनें</option></select>
+      <button onclick="renderMarksheet()">Marksheet दिखाएँ</button>
+      <button class="secondary" onclick="printMarksheet()">🖨️ प्रिंट</button>
+      <button class="green" onclick="downloadMarksheetPDF()">📥 Download PDF</button>
+    </div>
+    <div class="notice no-print">Marksheet में सभी विषयों के अंक दिखेंगे, जिसमें Physical Education और Art Education भी शामिल हैं।</div>
+    <div id="marksheetCard"></div>
+  </div>
+</section>
 <section id="certificate" class="page">
 <div class="card certificate-editor no-print">
 <h2>📜 Studying Certificate</h2>
@@ -213,7 +227,102 @@ function renderReport(){
     </div>
   </div>`;
 }
-function downloadReportPDF(){if(!reportCard.innerHTML.trim())renderReport();setTimeout(()=>{let w=window.open('','_blank');if(!w)return alert('Popup blocked है। Browser में popup allow करें।');w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Student Report Card</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>@page{size:A4 portrait;margin:8mm}body{font-family:Arial,"Noto Sans Devanagari",sans-serif;margin:0;color:#17202a}.report-sheet{width:190mm;min-height:274mm;margin:0 auto;padding:9mm;border:2px solid #173f67;position:relative;break-inside:avoid}.report-sheet:before{content:"";position:absolute;inset:4px;border:1px solid #9bb0c4;pointer-events:none}.report-head{text-align:center;position:relative;z-index:1;padding-bottom:10px;border-bottom:2px solid #173f67}.report-logo{width:68px;height:68px;object-fit:contain;display:block;margin:0 auto 7px}.school{text-align:center;font-size:21px;font-weight:800}.report-title{text-align:center;font-size:18px;font-weight:700;margin:6px 0 2px;text-transform:uppercase;letter-spacing:1px}.report-session{text-align:center;font-size:13px;color:#536779}.report-section-title{text-align:center;font-size:14px;font-weight:800;margin:14px 0 7px;text-transform:uppercase}.student-details{border:1px solid #9eb0c0;border-radius:5px;padding:10px 13px}.student-line{display:flex;gap:8px;line-height:1.8;font-size:14px;border-bottom:1px dashed #d2dbe3}.student-line:last-child{border-bottom:0}.student-line b{min-width:125px}.student-line span{flex:1}.report-marks table{width:100%;border-collapse:collapse}.report-marks th,.report-marks td{border:1px solid #a8b5c0;padding:7px;text-align:center;font-size:11px}.report-marks th{background:#173f67;color:#fff}.report-marks td.left{text-align:left}.report-marks tr:last-child td{font-weight:800;background:#eef4f8}.report-combined{min-height:270mm}.combined-marks{overflow:hidden}.combined-marks table{table-layout:fixed}.combined-marks th,.combined-marks td{padding:5px 3px;font-size:10px;word-break:break-word}.combined-marks th:first-child,.combined-marks td:first-child{width:28%}.combined-total td,.combined-percent td{font-weight:800}.combined-note{font-size:10px;text-align:center;color:#5a6976;margin-top:7px}.result-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:12px}.summary-box{border:1px solid #9eb0c0;border-radius:5px;padding:8px;text-align:center}.summary-box small{display:block;font-size:10px;color:#607181;text-transform:uppercase}.summary-box strong{display:block;font-size:15px;margin-top:3px}.signature-row{display:grid;grid-template-columns:1fr 1fr;gap:35px;margin-top:34px}.signature{text-align:center;border-top:1px solid #444;padding-top:6px;font-size:12px}.seal{text-align:center;margin-top:25px;font-size:11px}.seal-box{display:inline-flex;width:68px;height:68px;border:2px dashed #718494;border-radius:50%;align-items:center;justify-content:center;text-transform:uppercase}</style></head><body>'+reportCard.innerHTML+'</body></html>');w.document.close();w.focus();setTimeout(()=>w.print(),300);},100);}
+function downloadReportPDF(){const rc=document.getElementById("reportCard");if(!rc)return;if(!rc.innerHTML.trim())renderReport();setTimeout(()=>{let w=window.open('','_blank');if(!w)return alert('Popup blocked है। Browser में popup allow करें।');w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Student Report Card</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>@page{size:A4 portrait;margin:8mm}body{font-family:Arial,"Noto Sans Devanagari",sans-serif;margin:0;color:#17202a}.report-sheet{width:190mm;min-height:274mm;margin:0 auto;padding:9mm;border:2px solid #173f67;position:relative;break-inside:avoid}.report-sheet:before{content:"";position:absolute;inset:4px;border:1px solid #9bb0c4;pointer-events:none}.report-head{text-align:center;position:relative;z-index:1;padding-bottom:10px;border-bottom:2px solid #173f67}.report-logo{width:68px;height:68px;object-fit:contain;display:block;margin:0 auto 7px}.school{text-align:center;font-size:21px;font-weight:800}.report-title{text-align:center;font-size:18px;font-weight:700;margin:6px 0 2px;text-transform:uppercase;letter-spacing:1px}.report-session{text-align:center;font-size:13px;color:#536779}.report-section-title{text-align:center;font-size:14px;font-weight:800;margin:14px 0 7px;text-transform:uppercase}.student-details{border:1px solid #9eb0c0;border-radius:5px;padding:10px 13px}.student-line{display:flex;gap:8px;line-height:1.8;font-size:14px;border-bottom:1px dashed #d2dbe3}.student-line:last-child{border-bottom:0}.student-line b{min-width:125px}.student-line span{flex:1}.report-marks table{width:100%;border-collapse:collapse}.report-marks th,.report-marks td{border:1px solid #a8b5c0;padding:7px;text-align:center;font-size:11px}.report-marks th{background:#173f67;color:#fff}.report-marks td.left{text-align:left}.report-marks tr:last-child td{font-weight:800;background:#eef4f8}.report-combined{min-height:270mm}.combined-marks{overflow:hidden}.combined-marks table{table-layout:fixed}.combined-marks th,.combined-marks td{padding:5px 3px;font-size:10px;word-break:break-word}.combined-marks th:first-child,.combined-marks td:first-child{width:28%}.combined-total td,.combined-percent td{font-weight:800}.combined-note{font-size:10px;text-align:center;color:#5a6976;margin-top:7px}.result-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:12px}.summary-box{border:1px solid #9eb0c0;border-radius:5px;padding:8px;text-align:center}.summary-box small{display:block;font-size:10px;color:#607181;text-transform:uppercase}.summary-box strong{display:block;font-size:15px;margin-top:3px}.signature-row{display:grid;grid-template-columns:1fr 1fr;gap:35px;margin-top:34px}.signature{text-align:center;border-top:1px solid #444;padding-top:6px;font-size:12px}.seal{text-align:center;margin-top:25px;font-size:11px}.seal-box{display:inline-flex;width:68px;height:68px;border:2px dashed #718494;border-radius:50%;align-items:center;justify-content:center;text-transform:uppercase}</style></head><body>'+rc.innerHTML+'</body></html>');w.document.close();w.focus();setTimeout(()=>w.print(),300);},100);}
+
+
+function renderMarksheetSelectors(){
+  const e=document.getElementById('msheetStudent');
+  const ex=document.getElementById('msheetExam');
+  if(!e||!ex)return;
+  const oldStudent=e.value, oldExam=ex.value;
+  e.innerHTML=students.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(st=>
+    `<option value="${esc(st.id)}">${esc(st.name)} — ${esc(st.cls)} ${esc(st.sec)} / ${esc(st.roll)}</option>`
+  ).join('');
+  if(oldStudent&&students.some(st=>st.id===oldStudent))e.value=oldStudent;
+  const st=students.find(x=>x.id===e.value);
+  const exams=st?examsFor(st.cls,st.sec):[];
+  ex.innerHTML='<option value="">परीक्षा चुनें</option>'+exams.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  if(oldExam&&exams.includes(oldExam))ex.value=oldExam;
+  else if(exams.length)ex.value=exams[0];
+}
+
+function marksheetHTML(){
+  const studentEl=document.getElementById('msheetStudent');
+  const examEl=document.getElementById('msheetExam');
+  if(!studentEl||!examEl)return '';
+  const s=students.find(x=>x.id===studentEl.value);
+  const selectedExam=examEl.value;
+  if(!s)return '<div class="notice danger">पहले विद्यार्थी चुनें।</div>';
+  if(!selectedExam)return '<div class="notice danger">परीक्षा चुनें।</div>';
+
+  const allSubjects=marksSubjects(s.cls);
+  const studentMarks=marks.filter(m=>m.studentId===s.id && m.exam===selectedExam);
+  const bySubject={};
+  studentMarks.forEach(m=>{
+    const subject=String(m.subject||'').trim();
+    if(subject)bySubject[subject]=m;
+  });
+
+  let total=0,max=0,completed=0;
+  const rows=allSubjects.map(subject=>{
+    const m=bySubject[subject];
+    const obtained=m&&Number.isFinite(Number(m.score))?Number(m.score):null;
+    const mm=m&&Number.isFinite(Number(m.total))?Number(m.total):100;
+    if(obtained!==null){total+=obtained;max+=mm;completed++;}
+    else{max+=mm;}
+    const pct=obtained===null?'—':((obtained/mm)*100);
+    return `<tr><td class="left">${esc(subject)}</td><td>${mm}</td><td>${obtained===null?'—':obtained}</td><td>${obtained===null?'—':gradeFor(pct)}</td></tr>`;
+  }).join('');
+
+  const percentage=max?((total/max)*100):0;
+  return `<div class="report-sheet marksheet-sheet">
+    <div class="report-head">
+      <img src="./icon-192.png?v=4" class="report-logo" alt="School Logo">
+      <div class="school">SARASVATI BAL VIDHYA MANDIR SAKARGHATA</div>
+      <div class="report-title">MARKSHEET</div>
+      <div class="report-session">Academic Session: 2026–27</div>
+    </div>
+    <div class="report-section-title">Student Details</div>
+    <div class="student-details">
+      <div class="student-line"><b>Student Name</b><span>${esc(s.name)}</span></div>
+      <div class="student-line"><b>Father's Name</b><span>${esc(s.father||'—')}</span></div>
+      <div class="student-line"><b>Mother's Name</b><span>${esc(s.mother||'—')}</span></div>
+      <div class="student-line"><b>Class</b><span>${esc(s.cls)}</span></div>
+      <div class="student-line"><b>Roll Number</b><span>${esc(s.roll)}</span></div>
+      <div class="student-line"><b>Examination</b><span>${esc(selectedExam)}</span></div>
+    </div>
+    <div class="report-section-title">Marks</div>
+    <div class="report-marks"><table>
+      <tr><th>Subject</th><th>Maximum Marks</th><th>Marks Obtained</th><th>Grade</th></tr>
+      ${rows}
+      <tr><td class="left"><b>TOTAL</b></td><td><b>${max}</b></td><td><b>${total}</b></td><td><b>${gradeFor(percentage)}</b></td></tr>
+    </table></div>
+    <div class="result-summary">
+      <div class="summary-box"><small>Subjects Entered</small><strong>${completed}/${allSubjects.length}</strong></div>
+      <div class="summary-box"><small>Total Marks</small><strong>${total}/${max}</strong></div>
+      <div class="summary-box"><small>Percentage</small><strong>${percentage.toFixed(2)}%</strong></div>
+      <div class="summary-box"><small>Overall Grade</small><strong>${gradeFor(percentage)}</strong></div>
+    </div>
+  </div>`;
+}
+
+function renderMarksheet(){
+  const out=document.getElementById('marksheetCard');
+  if(out)out.innerHTML=marksheetHTML();
+}
+
+function printMarksheet(){
+  const html=marksheetHTML();
+  if(!html)return;
+  const w=window.open('','_blank');
+  if(!w)return alert('Popup blocked है। Browser में popup allow करें।');
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Student Marksheet</title><style>@page{size:A4 portrait;margin:8mm}body{font-family:Arial,"Noto Sans Devanagari",sans-serif;margin:0;color:#17202a}.report-sheet{width:190mm;min-height:274mm;margin:0 auto;padding:9mm;border:2px solid #173f67;position:relative}.report-sheet:before{content:"";position:absolute;inset:4px;border:1px solid #9bb0c4;pointer-events:none}.report-head{text-align:center;position:relative;z-index:1;padding-bottom:10px;border-bottom:2px solid #173f67}.report-logo{width:68px;height:68px;object-fit:contain;display:block;margin:0 auto 7px}.school{text-align:center;font-size:21px;font-weight:800}.report-title{text-align:center;font-size:18px;font-weight:700;margin:6px 0 2px;text-transform:uppercase;letter-spacing:1px}.report-session{text-align:center;font-size:13px;color:#536779}.report-section-title{text-align:center;font-size:14px;font-weight:800;margin:14px 0 7px;text-transform:uppercase}.student-details{border:1px solid #9eb0c0;border-radius:5px;padding:10px 13px}.student-line{display:flex;gap:8px;line-height:1.8;font-size:14px;border-bottom:1px dashed #d2dbe3}.student-line:last-child{border-bottom:0}.student-line b{min-width:125px}.student-line span{flex:1}.report-marks table{width:100%;border-collapse:collapse}.report-marks th,.report-marks td{border:1px solid #a8b5c0;padding:7px;text-align:center;font-size:11px}.report-marks th{background:#173f67;color:#fff}.report-marks td.left{text-align:left}.report-marks tr:last-child td{font-weight:800;background:#eef4f8}.result-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:12px}.summary-box{border:1px solid #9eb0c0;border-radius:5px;padding:8px;text-align:center}.summary-box small{display:block;font-size:10px;color:#607181;text-transform:uppercase}.summary-box strong{display:block;font-size:15px;margin-top:3px}</style></head><body>'+html+'</body></html>');
+  w.document.close();w.focus();setTimeout(()=>w.print(),300);
+}
+
+function downloadMarksheetPDF(){
+  printMarksheet();
+}
 
 function renderCertificateSelectors(){
   let e=document.getElementById('certStudent'); if(!e)return;
@@ -287,14 +396,13 @@ function promoteStudent(id){let s=students.find(x=>x.id===id);if(!s)return;let i
 
 function refresh(){
   bindElements();
-  dash();renderStudents();renderSubjects();fillExams();renderReportSelectors();renderCertificateSelectors();renderStudent360Selectors();renderMainStudentSearch();
+  dash();renderStudents();renderSubjects();fillExams();renderReportSelectors();renderMarksheetSelectors();renderCertificateSelectors();renderStudent360Selectors();renderMainStudentSearch();
 }
 function backup(){let data={app:'SBVM Result',version:APP_VERSION,exportedAt:new Date().toISOString(),students,subjects,marks};let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SBVM-Result-Backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);}
 function restore(file){if(!file)return;let r=new FileReader();r.onload=()=>{try{let text=String(r.result||'').replace(/^\\uFEFF/,'').trim();if(!text)throw new Error('empty');let d=JSON.parse(text);let src=d&&d.data&&typeof d.data==='object'?d.data:d;let st=Array.isArray(src.students)?src.students:(Array.isArray(src.sbvm2_students)?src.sbvm2_students:null);let su=src.subjects&&typeof src.subjects==='object'?src.subjects:null;let mk=Array.isArray(src.marks)?src.marks:(Array.isArray(src.sbvm2_marks)?src.sbvm2_marks:null);if(!st||!su||!mk)throw new Error('invalid');if(!confirm('Restore करने से current data replace होगा। Continue?'))return;students=st;subjects=su;marks=mk;save();refresh();document.getElementById('restoreFile').value='';alert('Backup restore हो गया।\\nविद्यार्थी: '+students.length+'\\nअंक रिकॉर्ड: '+marks.length);}catch(e){document.getElementById('restoreFile').value='';console.error('Backup restore failed:',e);alert('Backup upload नहीं हो पाया।\\n\\nकारण: Backup file का format पहचाना नहीं गया या file खराब है।\\n\\nकृपया इसी app से डाउनलोड की गई .json backup file चुनें।');}};r.onerror=()=>{document.getElementById('restoreFile').value='';alert('Backup file पढ़ी नहीं जा सकी।');};r.readAsText(file);}
 function toggleLang(){lang=lang==='hi'?'en':'hi';let en=lang==='en';document.getElementById('langBtn').textContent=en?'हिंदी / English':'हिंदी / English';document.getElementById('subtitle').textContent=en?'Student • Marks • Rank • Report Card Management':'Student • Marks • Rank • Report Card Management';document.title=en?'Sarasvati School Result System':'Sarasvati Bal Vidhya Mandir - School Result System';}
-let swReloading=false;
-async function registerSW(){if(!('serviceWorker' in navigator))return;try{await navigator.serviceWorker.register('./sw.js?v=1.4.17');navigator.serviceWorker.addEventListener('controllerchange',()=>{if(swReloading)return;swReloading=true;location.reload();});}catch(e){console.warn('SW registration failed',e);}}
-async function checkForUpdate(manual){let status=document.getElementById('updateStatus');try{let res=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});if(!res.ok)throw new Error('version check failed');let remote=await res.json();let rv=String(remote.version||APP_VERSION),iv=APP_VERSION;if(rv===iv){if(manual)status.textContent='आपके पास latest version 1.4.16 है।';return;}status.textContent='नया version '+rv+' उपलब्ध है। Update शुरू हो रहा है...';if('serviceWorker' in navigator){let reg=await navigator.serviceWorker.getRegistration('./');if(!reg)reg=await navigator.serviceWorker.register('./sw.js?v=1.4.15');await reg.update();if(reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'});return;}if(reg.installing){let w=reg.installing;w.addEventListener('statechange',()=>{if(w.state==='installed'&&navigator.serviceWorker.controller){w.postMessage({type:'SKIP_WAITING'});}});return;}location.reload();}}catch(e){if(manual)status.textContent='Update check नहीं हो पाया। Internet connection जाँचें और फिर कोशिश करें।';}}
+async function registerSW(){if(!('serviceWorker' in navigator))return;try{await navigator.serviceWorker.register('./sw.js?v=1.4.17');}catch(e){console.warn('SW registration failed',e);}}
+async function checkForUpdate(manual){let status=document.getElementById('updateStatus');try{let res=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});if(!res.ok)throw new Error('version check failed');let remote=await res.json();let rv=String(remote.version||APP_VERSION),iv=APP_VERSION;if(rv===iv){if(manual)status.textContent='आपके पास latest version 1.4.17 है।';return;}status.textContent='नया version '+rv+' उपलब्ध है। Update शुरू हो रहा है...';if('serviceWorker' in navigator){let reg=await navigator.serviceWorker.getRegistration('./');if(!reg)reg=await navigator.serviceWorker.register('./sw.js?v=1.4.17');await reg.update();if(reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'});return;}if(reg.installing){let w=reg.installing;w.addEventListener('statechange',()=>{if(w.state==='installed'&&navigator.serviceWorker.controller){w.postMessage({type:'SKIP_WAITING'});}});return;}location.reload();}}catch(e){if(manual)status.textContent='Update check नहीं हो पाया। Internet connection जाँचें और फिर कोशिश करें।';}}
 window.addEventListener('load',init);
 </script>
 </body>
