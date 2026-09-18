@@ -91,7 +91,7 @@
 </div>
 <div id="student360View"></div>
 </section>
-<section id="backup" class="page"><div class="card"><h2>☁️ Cloud Data Restore</h2><p>Firebase cloud में सुरक्षित saved data को local app में वापस लाएँ। यह current local data को cloud data से replace करेगा।</p><button class="green" onclick="restoreCloudData()">☁️ Cloud से Data Restore करें</button><div id="cloudRestoreStatus" class="notice">पहले School Result Login करें।</div></div><div class="card"><h2>💾 Backup / Restore</h2><p>Backup डाउनलोड करके सुरक्षित रखें। दूसरे कंप्यूटर पर Restore किया जा सकता है।</p><button onclick="backup()">⬇️ Backup डाउनलोड</button><label><input type="file" id="restoreFile" accept=".json" onchange="restore(this.files[0])"> Backup Restore करें</label></div><div class="card"><h2>🔄 App Update</h2><p>App का code online update हो सकता है। विद्यार्थी, विषय और अंक <b>localStorage</b> में अलग रहते हैं, इसलिए सामान्य code update से data delete नहीं होता।</p><div class="row"><strong>Installed version:</strong> <span id="appVersion">1.4.22</span><button class="green" onclick="checkForUpdate(true)">🔍 Check for Update</button></div><div id="updateStatus" class="notice">Update system तैयार है।</div></div></section>
+<section id="backup" class="page"><div class="card"><h2>☁️ Cloud Data Restore</h2><p>Firebase cloud में सुरक्षित school data को इस device पर वापस लाएँ। Restore से पहले current local data का recovery backup अपने-आप बन जाएगा।</p><button class="green" onclick="restoreCloudData()">☁️ Cloud से Data Restore करें</button><div id="cloudRestoreStatus" class="notice">School Result Login के बाद इस button को दबाएँ।</div></div><div class="card"><h2>💾 Backup / Restore</h2><p>Backup डाउनलोड करके सुरक्षित रखें। दूसरे कंप्यूटर पर Restore किया जा सकता है।</p><button onclick="backup()">⬇️ Backup डाउनलोड</button><label><input type="file" id="restoreFile" accept=".json" onchange="restore(this.files[0])"> Backup Restore करें</label></div><div class="card"><h2>🔄 App Update</h2><p>App का code online update हो सकता है। विद्यार्थी, विषय और अंक <b>localStorage</b> में अलग रहते हैं, इसलिए सामान्य code update से data delete नहीं होता।</p><div class="row"><strong>Installed version:</strong> <span id="appVersion">1.4.22</span><button class="green" onclick="checkForUpdate(true)">🔍 Check for Update</button></div><div id="updateStatus" class="notice">Update system तैयार है।</div></div></section>
 </main>
 <script>
 const APP_VERSION='1.4.22';
@@ -125,12 +125,11 @@ function esc(v){return String(v??'').replace(/[&<>'\"]/g,c=>({'&':'&amp;','<':'&
 function opts(id,all=true){let e=document.getElementById(id);e.innerHTML=(all?'<option value="">सभी कक्षाएँ</option>':'')+CLASSES.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');}
 function recoverLocalDataIfEmpty(){
   try{
-    const current={
-      students:JSON.parse(localStorage.getItem('sbvm2_students')||'[]'),
-      subjects:JSON.parse(localStorage.getItem('sbvm2_subjects')||'{}'),
-      marks:JSON.parse(localStorage.getItem('sbvm2_marks')||'[]')
-    };
-    const empty=(!Array.isArray(current.students)||current.students.length===0)&&(!Array.isArray(current.marks)||current.marks.length===0);
+    const studentsRaw=localStorage.getItem('sbvm2_students');
+    const marksRaw=localStorage.getItem('sbvm2_marks');
+    const currentStudents=studentsRaw?JSON.parse(studentsRaw):[];
+    const currentMarks=marksRaw?JSON.parse(marksRaw):[];
+    const empty=(!Array.isArray(currentStudents)||currentStudents.length===0)&&(!Array.isArray(currentMarks)||currentMarks.length===0);
     const raw=localStorage.getItem('sbvm2_recovery_backup');
     if(!empty||!raw)return;
     const b=JSON.parse(raw);
@@ -139,7 +138,6 @@ function recoverLocalDataIfEmpty(){
       localStorage.setItem('sbvm2_subjects',JSON.stringify(b.subjects&&typeof b.subjects==='object'?b.subjects:{}));
       localStorage.setItem('sbvm2_marks',JSON.stringify(Array.isArray(b.marks)?b.marks:[]));
       students=b.students;subjects=b.subjects||{};marks=Array.isArray(b.marks)?b.marks:[];
-      console.warn('Recovered school data from the last local recovery snapshot.');
     }
   }catch(e){console.warn('Local recovery check skipped',e);}
 }
@@ -155,7 +153,7 @@ function init(){
   filterClass.value='';sc.value='Class 1';mc.value='Class 1';rc.value='Class 1';subClass.value='Class 1';
   refresh();loadMarks(false);registerSW();setTimeout(()=>checkForUpdate(false),1200);
 }
-function page(id){const target=document.getElementById(id);if(!target)return;document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));target.classList.add('active');refresh();if(id==='marks')loadMarks(false);}
+function page(id){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');refresh();if(id==='marks')loadMarks(false);}
 function addStudent(){let name=sn.value.trim(),roll=sr.value.trim(),cls=sc.value,sec=(ss.value||'A').trim().toUpperCase(),father=sf.value.trim(),mother=sm.value.trim(),phone=(sp.value||'').trim();if(!name||!roll)return alert('नाम और रोल नंबर भरें।');if(students.some(x=>x.cls===cls&&x.sec===sec&&String(x.roll)===roll))return alert('यह रोल नंबर पहले से है।');students.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),name,roll,cls,sec,father,mother,parentPhone:phone,notes:''});save();sn.value='';sr.value='';sf.value='';sm.value='';sp.value='';refresh();}
 function renderStudents(){let fc=filterClass.value,fs=filterSec.value,q=(studentSearch.value||'').toLowerCase().trim();let a=students.filter(s=>(!fc||s.cls===fc)&&(!fs||s.sec===fs)&&(!q||String(s.name).toLowerCase().includes(q)||String(s.roll).toLowerCase().includes(q)||String(s.parentPhone||'').toLowerCase().includes(q)||String(s.father||'').toLowerCase().includes(q)));let h='<table><tr><th>रोल</th><th>नाम</th><th>कक्षा</th><th>सेक्शन</th><th>अभिभावक</th><th>मोबाइल</th><th>Action</th></tr>';a.forEach(s=>h+=`<tr><td>${esc(s.roll)}</td><td class="left">${esc(s.name)}</td><td>${esc(s.cls)}</td><td>${esc(s.sec)}</td><td>${esc(s.father||'-')}</td><td>${esc(s.parentPhone||'-')}</td><td><button onclick="openStudent360('${s.id}')">👤 360°</button> <button onclick="editStudent('${s.id}')">✏️ Edit</button> <button class="red" onclick="delStudent('${s.id}')">हटाएँ</button></td></tr>`);studentList.innerHTML=h+'</table>';}
 function editStudent(id){let s=students.find(x=>x.id===id);if(!s)return;let name=prompt('विद्यार्थी का नाम:',s.name);if(name===null)return;let roll=prompt('रोल नंबर:',s.roll);if(roll===null)return;let sec=(prompt('सेक्शन:',s.sec)||s.sec).trim().toUpperCase();let father=prompt('पिता/अभिभावक का नाम:',s.father||'');let mother=prompt('माता का नाम:',s.mother||'');let phone=prompt('Parent Mobile:',s.parentPhone||'');if(students.some(x=>x.id!==id&&x.cls===s.cls&&x.sec===sec&&String(x.roll)===String(roll).trim()))return alert('यह रोल नंबर उसी कक्षा/सेक्शन में पहले से है।');s.name=name.trim();s.roll=String(roll).trim();s.sec=sec||'A';s.father=father===null?s.father:father.trim();s.mother=mother===null?(s.mother||''):mother.trim();s.parentPhone=phone===null?(s.parentPhone||''):phone.trim();save();refresh();}
@@ -171,7 +169,8 @@ function examsFor(cls,sec){return [...new Set(marks.filter(m=>m.cls===cls&&m.sec
 function fillExams(){let cls=rc.value,sec=rsec.value,a=examsFor(cls,sec);rexam.innerHTML=a.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');if(!a.length)rexam.innerHTML='<option value="">कोई परीक्षा नहीं</option>';}
 function renderResult(){fillExams();let cls=rc.value,sec=rsec.value,ex=rexam.value;if(!ex){resultTable.innerHTML='<p class="muted">इस कक्षा/सेक्शन के लिए कोई परीक्षा नहीं मिली।</p>';return;}let subs=academicSubjects(cls),a=students.filter(s=>s.cls===cls&&s.sec===sec),rows=a.map(s=>{let rec=subs.map(sub=>marks.find(m=>m.studentId===s.id&&m.cls===cls&&m.sec===sec&&m.exam===ex&&m.subject===sub)).filter(Boolean);let complete=subs.length>0&&rec.length===subs.length;let total=rec.reduce((z,m)=>z+Number(m.score),0),max=rec.reduce((z,m)=>z+Number(m.total),0),pct=max?total/max*100:0;return {...s,rec,total,max,pct,complete};}).sort((x,y)=>y.pct-x.pct||y.total-x.total||String(x.roll).localeCompare(String(y.roll),undefined,{numeric:true}));let rank=0,lastPct=null,seen=0;rows.forEach(r=>{if(r.complete){seen++;if(lastPct===null||Math.abs(r.pct-lastPct)>1e-9){rank=seen;lastPct=r.pct;}r.rank=rank;}else r.rank='—';});let h='<div class="scroll"><table><tr><th>रैंक</th><th>रोल</th><th>नाम</th><th>कुल अंक</th><th>प्रतिशत</th><th>स्थिति</th></tr>';rows.forEach(r=>h+=`<tr><td>${r.rank}</td><td>${esc(r.roll)}</td><td class="left">${esc(r.name)}</td><td>${r.complete?`${r.total}/${r.max}`:'—'}</td><td>${r.complete?r.pct.toFixed(2)+'%':'—'}</td><td>${r.complete?'पूर्ण':'अपूर्ण'}</td></tr>`);resultTable.innerHTML=h+'</table></div>';}
 function downloadResultPDF(){if(!resultTable.innerHTML.trim())renderResult();setTimeout(()=>{let w=window.open('','_blank');if(!w)return alert('Popup blocked है। Browser में popup allow करें।');w.document.write('<!doctype html><html lang="hi"><head><meta charset="utf-8"><title>कक्षा परिणाम और रैंक</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:Arial,"Noto Sans Devanagari",sans-serif;margin:20px;color:#17202a}h1{text-align:center;font-size:22px;margin:0 0 6px}h2{text-align:center;font-size:18px;margin:0 0 16px}.scroll{overflow:visible}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #555;padding:8px;text-align:center}th{background:#eee}td.left{text-align:left}@media print{body{margin:10mm}table{font-size:12px}tr{break-inside:avoid}}</style></head><body><h1>SARASVATI BAL VIDHYA MANDIR SAKARGHATA</h1><h2>कक्षा परिणाम और रैंक</h2>'+resultTable.innerHTML+'</body></html>');w.document.close();w.focus();setTimeout(()=>w.print(),300);},100);}
-function dash(){ds.textContent=students.length;dc.textContent=new Set(students.map(s=>s.cls)).size;dt.textContent=new Set(marks.map(m=>m.exam)).sizefunction reportExamsForStudent(st){
+function dash(){ds.textContent=students.length;dc.textContent=new Set(students.map(s=>s.cls)).size;dt.textContent=new Set(marks.map(m=>m.exam)).size;dr.textContent=marks.length;}
+function reportExamsForStudent(st){
   if(!st)return[];
   const byStudent=[...new Set(marks.filter(m=>m.studentId===st.id&&m.exam).map(m=>String(m.exam).trim()).filter(Boolean))];
   if(byStudent.length)return byStudent.sort();
@@ -184,7 +183,7 @@ function updateReportExams(){
   const st=students.find(x=>x.id===repEl.value);
   const oldE=examEl.value;
   const exams=reportExamsForStudent(st);
-  examEl.innerHTML='<option value="">परीक्षा चुनें</option>'+exams.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  examEl.innerHTML='<option value="">परीक्षा चुनें</option>'+exams.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');
   if(exams.includes(oldE))examEl.value=oldE;
   else if(exams.length)examEl.value=exams[0];
 }
@@ -193,10 +192,9 @@ function renderReportSelectors(){
   const examEl=document.getElementById('repExam');
   if(!repEl||!examEl)return;
   const old=repEl.value;
-  repEl.innerHTML='<option value="">विद्यार्थी चुनें</option>'+students.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(st=>`<option value="${esc(st.id)}">${esc(st.name)} — ${esc(st.cls)} ${esc(st.sec)} / ${esc(st.roll)}</option>`).join('');
+  repEl.innerHTML='<option value="">विद्यार्थी चुनें</option>'+students.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(st=>'<option value="'+esc(st.id)+'">'+esc(st.name)+' — '+esc(st.cls)+' '+esc(st.sec)+' / '+esc(st.roll)+'</option>').join('');
   if(old&&students.some(st=>st.id===old))repEl.value=old;
   updateReportExams();
-}length)examEl.value=exams[0];
 }
 function gradeFor(pct){if(pct>=90)return'A+';if(pct>=80)return'A';if(pct>=70)return'B+';if(pct>=60)return'B';if(pct>=50)return'C';if(pct>=40)return'D';return'E';}
 function renderReport(){
@@ -433,7 +431,24 @@ function refresh(){
   bindElements();
   dash();renderStudents();renderSubjects();fillExams();renderReportSelectors();renderMarksheetSelectors();renderCertificateSelectors();renderStudent360Selectors();renderMainStudentSearch();
 }
-async function restoreCloudData(){\n  const s=document.getElementById('cloudRestoreStatus');\n  if(s)s.textContent='Cloud data check हो रहा है…';\n  try{\n    if(!window.sbvmCloud||!window.sbvmCloud.restore)throw new Error('Cloud Restore service अभी तैयार नहीं है।');\n    const r=await window.sbvmCloud.restore();\n    students=readJSON('sbvm2_students',[]);subjects=readJSON('sbvm2_subjects',{});marks=readJSON('sbvm2_marks',[]);\n    refresh();\n    if(s){s.className='notice success';s.textContent='Cloud restore सफल: '+r.students+' विद्यार्थी, '+r.marks+' अंक रिकॉर्ड।';}\n    alert('Cloud data वापस आ गया।\\nविद्यार्थी: '+r.students+'\\nअंक रिकॉर्ड: '+r.marks);\n  }catch(e){if(s){s.className='notice danger';s.textContent='Restore नहीं हुआ: '+(e.message||e);}}\n}\nfunction backup(){let data={app:'SBVM Result',version:APP_VERSION,exportedAt:new Date().toISOString(),students,subjects,marks};let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SBVM-Result-Backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);}
+async function restoreCloudData(){
+  const s=document.getElementById('cloudRestoreStatus');
+  if(s){s.className='notice';s.textContent='Cloud data check हो रहा है…';}
+  try{
+    if(!window.sbvmCloud||!window.sbvmCloud.restore)throw new Error('Cloud Restore service अभी तैयार नहीं है।');
+    const r=await window.sbvmCloud.restore();
+    students=readJSON('sbvm2_students',[]);
+    subjects=readJSON('sbvm2_subjects',{});
+    marks=readJSON('sbvm2_marks',[]);
+    refresh();
+    if(s){s.className='notice success';s.textContent='Cloud restore सफल: '+r.students+' विद्यार्थी, '+r.marks+' अंक रिकॉर्ड।';}
+    alert('Cloud data वापस आ गया.\\nविद्यार्थी: '+r.students+'\\nअंक रिकॉर्ड: '+r.marks);
+  }catch(e){
+    console.error('Cloud restore failed:',e);
+    if(s){s.className='notice danger';s.textContent='Restore नहीं हुआ: '+(e&&e.message?e.message:'Unknown error');}
+  }
+}
+function backup(){let data={app:'SBVM Result',version:APP_VERSION,exportedAt:new Date().toISOString(),students,subjects,marks};let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SBVM-Result-Backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);}
 function restore(file){if(!file)return;let r=new FileReader();r.onload=()=>{try{let text=String(r.result||'').replace(/^\\uFEFF/,'').trim();if(!text)throw new Error('empty');let d=JSON.parse(text);let src=d&&d.data&&typeof d.data==='object'?d.data:d;let st=Array.isArray(src.students)?src.students:(Array.isArray(src.sbvm2_students)?src.sbvm2_students:null);let su=src.subjects&&typeof src.subjects==='object'?src.subjects:null;let mk=Array.isArray(src.marks)?src.marks:(Array.isArray(src.sbvm2_marks)?src.sbvm2_marks:null);if(!st||!su||!mk)throw new Error('invalid');if(!confirm('Restore करने से current data replace होगा। Continue?'))return;students=st;subjects=su;marks=mk;save();refresh();document.getElementById('restoreFile').value='';alert('Backup restore हो गया।\\nविद्यार्थी: '+students.length+'\\nअंक रिकॉर्ड: '+marks.length);}catch(e){document.getElementById('restoreFile').value='';console.error('Backup restore failed:',e);alert('Backup upload नहीं हो पाया।\\n\\nकारण: Backup file का format पहचाना नहीं गया या file खराब है।\\n\\nकृपया इसी app से डाउनलोड की गई .json backup file चुनें।');}};r.onerror=()=>{document.getElementById('restoreFile').value='';alert('Backup file पढ़ी नहीं जा सकी।');};r.readAsText(file);}
 function toggleLang(){lang=lang==='hi'?'en':'hi';let en=lang==='en';document.getElementById('langBtn').textContent=en?'हिंदी / English':'हिंदी / English';document.getElementById('subtitle').textContent=en?'Student • Marks • Rank • Report Card Management':'Student • Marks • Rank • Report Card Management';document.title=en?'Sarasvati School Result System':'Sarasvati Bal Vidhya Mandir - School Result System';}
 async function registerSW(){if(!('serviceWorker' in navigator))return;try{await navigator.serviceWorker.register('./sw.js?v=1.4.22');}catch(e){console.warn('SW registration failed',e);}}
