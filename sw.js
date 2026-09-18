@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sarasvati-school-v1.4.17';
+const CACHE_NAME = 'sarasvati-school-v1.4.18';
 const APP_ASSETS = ['./','./index.html','./manifest.json','./version.json','./icon-192.png?v=4','./firebase-login.js?v=3','./firebase-sync.js?v=4'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_ASSETS)).then(() => self.skipWaiting()));
@@ -17,7 +17,7 @@ self.addEventListener('fetch', event => {
   const isVersion = url.pathname.endsWith('/version.json');
   const isManifest = url.pathname.endsWith('/manifest.json');
   if(isVersion){
-    event.respondWith(new Response('{"version":"1.4.16","updated":"2026-09-18","notes":"Separated Marks Entry and normal Report Card; Physical Education and Art Education stay in marks entry only; simplified report card summary"}',{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}}));
+    event.respondWith(new Response('{"version":"1.4.18","updated":"2026-09-18","notes":"Added separate Marksheet and removed automatic reload loop"}',{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}}));
     return;
   }
   if(isIndex){
