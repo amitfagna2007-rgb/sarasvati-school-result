@@ -64,15 +64,39 @@
 const APP_VERSION='1.4.6';
 const CLASSES=['Nursery','LKG','UKG',...Array.from({length:12},(_,i)=>'Class '+(i+1))];
 const defaultSubjects={Nursery:['Hindi','English','Maths','EVS'],LKG:['Hindi','English','Maths','EVS'],UKG:['Hindi','English','Maths','EVS']};
-let students=JSON.parse(localStorage.getItem('sbvm2_students')||'[]');
-let subjects=JSON.parse(localStorage.getItem('sbvm2_subjects')||'{}');
-let marks=JSON.parse(localStorage.getItem('sbvm2_marks')||'[]');
+function readJSON(key,fallback){
+  try{
+    const raw=localStorage.getItem(key);
+    if(raw===null||raw==='')return fallback;
+    const value=JSON.parse(raw);
+    return value;
+  }catch(e){
+    console.warn('Invalid local data for '+key+'; using safe fallback.',e);
+    return fallback;
+  }
+}
+let students=readJSON('sbvm2_students',[]);
+let subjects=readJSON('sbvm2_subjects',{});
+let marks=readJSON('sbvm2_marks',[]);
+if(!Array.isArray(students))students=[];
+if(!subjects||typeof subjects!=='object'||Array.isArray(subjects))subjects={};
+if(!Array.isArray(marks))marks=[];
 let lang='hi';
 CLASSES.forEach(c=>{if(!subjects[c])subjects[c]=defaultSubjects[c]||['Hindi','English','Mathematics','Science','Social Science'];});
 function save(){localStorage.setItem('sbvm2_students',JSON.stringify(students));localStorage.setItem('sbvm2_subjects',JSON.stringify(subjects));localStorage.setItem('sbvm2_marks',JSON.stringify(marks));dash();window.dispatchEvent(new Event('sbvm-local-save'));}
 function esc(v){return String(v??'').replace(/[&<>'\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
 function opts(id,all=true){let e=document.getElementById(id);e.innerHTML=(all?'<option value="">सभी कक्षाएँ</option>':'')+CLASSES.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');}
-function init(){opts('sc',false);opts('mc',false);opts('rc',false);opts('subClass',false);opts('filterClass',true);filterClass.value='';sc.value='Class 1';mc.value='Class 1';rc.value='Class 1';subClass.value='Class 1';refresh();loadMarks(false);registerSW();setTimeout(()=>checkForUpdate(false),1200);}
+function bindElements(){
+  document.querySelectorAll('[id]').forEach(e=>{
+    if(!(e.id in window))window[e.id]=e;
+  });
+}
+function init(){
+  bindElements();
+  opts('sc',false);opts('mc',false);opts('rc',false);opts('subClass',false);opts('filterClass',true);
+  filterClass.value='';sc.value='Class 1';mc.value='Class 1';rc.value='Class 1';subClass.value='Class 1';
+  refresh();loadMarks(false);registerSW();setTimeout(()=>checkForUpdate(false),1200);
+}
 function page(id){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');refresh();if(id==='marks')loadMarks(false);}
 function addStudent(){let name=sn.value.trim(),roll=sr.value.trim(),cls=sc.value,sec=(ss.value||'A').trim().toUpperCase(),father=sf.value.trim(),mother=sm.value.trim();if(!name||!roll)return alert('नाम और रोल नंबर भरें।');if(students.some(x=>x.cls===cls&&x.sec===sec&&String(x.roll)===roll))return alert('यह रोल नंबर पहले से है।');students.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),name,roll,cls,sec,father,mother});save();sn.value='';sr.value='';sf.value='';sm.value='';refresh();}
 function renderStudents(){let fc=filterClass.value,fs=filterSec.value,q=(studentSearch.value||'').toLowerCase();let a=students.filter(s=>(!fc||s.cls===fc)&&(!fs||s.sec===fs)&&(!q||String(s.name).toLowerCase().includes(q)||String(s.roll).toLowerCase().includes(q)));let h='<table><tr><th>रोल</th><th>नाम</th><th>कक्षा</th><th>सेक्शन</th><th>अभिभावक</th><th>Action</th></tr>';a.forEach(s=>h+=`<tr><td>${esc(s.roll)}</td><td class="left">${esc(s.name)}</td><td>${esc(s.cls)}</td><td>${esc(s.sec)}</td><td>${esc(s.father||'-')}</td><td><button onclick="editStudent('${s.id}')">✏️ Edit</button> <button class="red" onclick="delStudent('${s.id}')">हटाएँ</button></td></tr>`);studentList.innerHTML=h+'</table>';}
@@ -148,7 +172,10 @@ function downloadCertificatePDF(){
   w.document.close(); w.focus(); setTimeout(()=>w.print(),300);
 }
 
-function refresh(){dash();renderStudents();renderSubjects();fillExams();renderReportSelectors();renderCertificateSelectors();}
+function refresh(){
+  bindElements();
+  dash();renderStudents();renderSubjects();fillExams();renderReportSelectors();renderCertificateSelectors();
+}
 function backup(){let data={app:'SBVM Result',version:APP_VERSION,exportedAt:new Date().toISOString(),students,subjects,marks};let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SBVM-Result-Backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);}
 function restore(file){if(!file)return;let r=new FileReader();r.onload=()=>{try{let text=String(r.result||'').replace(/^\\uFEFF/,'').trim();if(!text)throw new Error('empty');let d=JSON.parse(text);let src=d&&d.data&&typeof d.data==='object'?d.data:d;let st=Array.isArray(src.students)?src.students:(Array.isArray(src.sbvm2_students)?src.sbvm2_students:null);let su=src.subjects&&typeof src.subjects==='object'?src.subjects:null;let mk=Array.isArray(src.marks)?src.marks:(Array.isArray(src.sbvm2_marks)?src.sbvm2_marks:null);if(!st||!su||!mk)throw new Error('invalid');if(!confirm('Restore करने से current data replace होगा। Continue?'))return;students=st;subjects=su;marks=mk;save();refresh();document.getElementById('restoreFile').value='';alert('Backup restore हो गया।\\nविद्यार्थी: '+students.length+'\\nअंक रिकॉर्ड: '+marks.length);}catch(e){document.getElementById('restoreFile').value='';console.error('Backup restore failed:',e);alert('Backup upload नहीं हो पाया।\\n\\nकारण: Backup file का format पहचाना नहीं गया या file खराब है।\\n\\nकृपया इसी app से डाउनलोड की गई .json backup file चुनें।');}};r.onerror=()=>{document.getElementById('restoreFile').value='';alert('Backup file पढ़ी नहीं जा सकी।');};r.readAsText(file);}
 function toggleLang(){lang=lang==='hi'?'en':'hi';let en=lang==='en';document.getElementById('langBtn').textContent=en?'हिंदी / English':'हिंदी / English';document.getElementById('subtitle').textContent=en?'Student • Marks • Rank • Report Card Management':'Student • Marks • Rank • Report Card Management';document.title=en?'Sarasvati School Result System':'Sarasvati Bal Vidhya Mandir - School Result System';}
