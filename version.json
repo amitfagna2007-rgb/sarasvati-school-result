@@ -1,1 +1,1 @@
-{"version":"1.4.33","updated":"2026-09-19","notes":"Restored fuller recovery data and protected against partial cloud snapshots."}
+{"version":"1.4.34","updated":"2026-09-19","notes":"Fixed Firebase connection key and strengthened recovery/update loading."}
