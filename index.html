@@ -177,7 +177,15 @@ function init(){
   fillResultSections();
   refresh();loadMarks(false);registerSW();setTimeout(()=>checkForUpdate(false),1200);
 }
-function page(id){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');refresh();if(id==='marks')loadMarks(false);}
+function page(id){
+  const target=document.getElementById(id);
+  if(!target)return;
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  target.classList.add('active');
+  try{refresh();}catch(e){console.error('Page refresh error:',e);}
+  if(id==='marks'){try{loadMarks(false);}catch(e){console.error('Marks page error:',e);}}
+  window.scrollTo({top:0,behavior:'auto'});
+}
 function addStudent(){let name=sn.value.trim(),roll=sr.value.trim(),cls=sc.value,sec=(ss.value||'A').trim().toUpperCase(),father=sf.value.trim(),mother=sm.value.trim(),phone=(sp.value||'').trim();if(!name||!roll)return alert('नाम और रोल नंबर भरें।');if(students.some(x=>x.cls===cls&&x.sec===sec&&String(x.roll)===roll))return alert('यह रोल नंबर पहले से है।');students.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),name,roll,cls,sec,father,mother,parentPhone:phone,notes:''});save();sn.value='';sr.value='';sf.value='';sm.value='';sp.value='';refresh();}
 function renderStudents(){let fc=filterClass.value,fs=filterSec.value,q=(studentSearch.value||'').toLowerCase().trim();let a=students.filter(s=>(!fc||s.cls===fc)&&(!fs||s.sec===fs)&&(!q||String(s.name).toLowerCase().includes(q)||String(s.roll).toLowerCase().includes(q)||String(s.parentPhone||'').toLowerCase().includes(q)||String(s.father||'').toLowerCase().includes(q)));let h='<table><tr><th>रोल</th><th>नाम</th><th>कक्षा</th><th>सेक्शन</th><th>अभिभावक</th><th>मोबाइल</th><th>Action</th></tr>';a.forEach(s=>h+=`<tr><td>${esc(s.roll)}</td><td class="left">${esc(s.name)}</td><td>${esc(s.cls)}</td><td>${esc(s.sec)}</td><td>${esc(s.father||'-')}</td><td>${esc(s.parentPhone||'-')}</td><td><button onclick="openStudent360('${s.id}')">👤 360°</button> <button onclick="editStudent('${s.id}')">✏️ Edit</button> <button class="red" onclick="delStudent('${s.id}')">हटाएँ</button></td></tr>`);studentList.innerHTML=h+'</table>';}
 function editStudent(id){const s=students.find(x=>String(x.id)===String(id));if(!s)return alert('विद्यार्थी नहीं मिला।');const oldClass=s.cls,oldSec=s.sec||'A';const name=prompt('विद्यार्थी का नाम:',s.name||'');if(name===null)return;const roll=prompt('रोल नंबर:',s.roll||'');if(roll===null)return;const clsInput=prompt('कक्षा बदलें/रखें:\nउपलब्ध कक्षाएँ: '+CLASSES.join(', '),s.cls||'');if(clsInput===null)return;const matchedClass=CLASSES.find(c=>String(c).trim().toLowerCase()===String(clsInput).trim().toLowerCase());if(!matchedClass)return alert('कक्षा सही नहीं है। उपलब्ध कक्षाओं में से चुनें: '+CLASSES.join(', '));const secInput=prompt('सेक्शन:',s.sec||'A');if(secInput===null)return;const sec=String(secInput).trim().toUpperCase()||'A';const father=prompt('पिता/अभिभावक का नाम:',s.father||'');if(father===null)return;const mother=prompt('माता का नाम:',s.mother||'');if(mother===null)return;const phone=prompt('Parent Mobile:',s.parentPhone||'');if(phone===null)return;const cleanName=String(name).trim(),cleanRoll=String(roll).trim();if(!cleanName||!cleanRoll)return alert('नाम और रोल नंबर खाली नहीं हो सकते।');if(students.some(x=>String(x.id)!==String(id)&&String(x.cls).trim().toLowerCase()===matchedClass.toLowerCase()&&String(x.sec||'A').trim().toUpperCase()===sec&&String(x.roll).trim()===cleanRoll))return alert('यह रोल नंबर उसी कक्षा/सेक्शन में पहले से है।');s.name=cleanName;s.roll=cleanRoll;s.cls=matchedClass;s.sec=sec;s.father=String(father).trim();s.mother=String(mother).trim();s.parentPhone=String(phone).trim();if(oldClass!==matchedClass||oldSec!==sec){marks.forEach(m=>{if(String(m.studentId)===String(id)){m.cls=matchedClass;m.sec=sec;}});}save();refresh();const saved=students.find(x=>String(x.id)===String(id));if(!saved||saved.name!==cleanName||String(saved.roll)!==cleanRoll||saved.cls!==matchedClass||saved.sec!==sec)return alert('Edit save नहीं हुआ। कृपया दोबारा कोशिश करें।');alert('विद्यार्थी की जानकारी सफलतापूर्वक अपडेट हो गई।');}
@@ -633,7 +641,8 @@ function promoteStudent(id){let s=students.find(x=>x.id===id);if(!s)return;let i
 
 function refresh(){
   bindElements();
-  dash();renderStudents();renderSubjects();fillExams();renderReportSelectors();renderMarksheetSelectors();renderCertificateSelectors();renderStudent360Selectors();renderMainStudentSearch();
+  const tasks=[dash,renderStudents,renderSubjects,fillExams,renderReportSelectors,renderMarksheetSelectors,renderCertificateSelectors,renderStudent360Selectors,renderMainStudentSearch];
+  tasks.forEach(fn=>{try{fn();}catch(e){console.error('Refresh error in '+(fn.name||'function')+':',e);}});
 }
 async function restoreCloudData(){
   const s=document.getElementById('cloudRestoreStatus');
