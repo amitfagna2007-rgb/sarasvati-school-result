@@ -148,20 +148,20 @@ function esc(v){return String(v??'').replace(/[&<>'\"]/g,c=>({'&':'&amp;','<':'&
 function opts(id,all=true){let e=document.getElementById(id);e.innerHTML=(all?'<option value="">सभी कक्षाएँ</option>':'')+CLASSES.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');}
 function recoverLocalDataIfEmpty(){
   try{
-    const studentsRaw=localStorage.getItem('sbvm2_students');
-    const marksRaw=localStorage.getItem('sbvm2_marks');
-    const currentStudents=studentsRaw?JSON.parse(studentsRaw):[];
-    const currentMarks=marksRaw?JSON.parse(marksRaw):[];
-    const empty=(!Array.isArray(currentStudents)||currentStudents.length===0)&&(!Array.isArray(currentMarks)||currentMarks.length===0);
     const raw=localStorage.getItem('sbvm2_recovery_backup');
-    if(!empty||!raw)return;
+    if(!raw)return;
     const b=JSON.parse(raw);
-    if(Array.isArray(b.students)&&b.students.length){
-      localStorage.setItem('sbvm2_students',JSON.stringify(b.students));
-      localStorage.setItem('sbvm2_subjects',JSON.stringify(b.subjects&&typeof b.subjects==='object'?b.subjects:{}));
-      localStorage.setItem('sbvm2_marks',JSON.stringify(Array.isArray(b.marks)?b.marks:[]));
-      students=b.students;subjects=b.subjects||{};marks=Array.isArray(b.marks)?b.marks:[];
-    }
+    if(!Array.isArray(b?.students)||!b.students.length)return;
+    const curStudents=readJSON('sbvm2_students',[]);
+    const curMarks=readJSON('sbvm2_marks',[]);
+    const curSubjects=readJSON('sbvm2_subjects',{});
+    const currentScore=(Array.isArray(curStudents)?curStudents.length:0)*100+(Array.isArray(curMarks)?curMarks.length:0)*10+Object.values(curSubjects&&typeof curSubjects==='object'?curSubjects:{}).reduce((n,v)=>n+(Array.isArray(v)?v.length:0),0);
+    const backupScore=b.students.length*100+(Array.isArray(b.marks)?b.marks.length:0)*10+Object.values(b.subjects&&typeof b.subjects==='object'?b.subjects:{}).reduce((n,v)=>n+(Array.isArray(v)?v.length:0),0);
+    if(backupScore<=currentScore)return;
+    localStorage.setItem('sbvm2_students',JSON.stringify(b.students));
+    localStorage.setItem('sbvm2_subjects',JSON.stringify(b.subjects&&typeof b.subjects==='object'?b.subjects:{}));
+    localStorage.setItem('sbvm2_marks',JSON.stringify(Array.isArray(b.marks)?b.marks:[]));
+    students=b.students;subjects=b.subjects||{};marks=Array.isArray(b.marks)?b.marks:[];
   }catch(e){console.warn('Local recovery check skipped',e);}
 }
 function bindElements(){
