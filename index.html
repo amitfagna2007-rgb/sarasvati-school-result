@@ -92,23 +92,9 @@
 <div><label><b>विद्यार्थी (Student)</b></label><select id="certStudent"></select></div>
 <div><label><b>Certificate No. (प्रमाण-पत्र संख्या)</b></label><input id="certNo" placeholder="Certificate No."></div>
 <div><label><b>Certificate Date (आज की/जारी करने की तारीख)</b></label><input id="certDate" type="date"></div>
-<div><label><b>Purpose (किस काम के लिए)</b></label><input id="certPurpose" placeholder="जैसे Scholarship / Admission"></div>
 <div><label><b>Academic Session (शैक्षणिक सत्र)</b></label><input id="certSession" value="2026–27" placeholder="Academic Session"></div>
 <div><label><b>Date of Birth / DOB (जन्म तिथि)</b></label><input id="certDob" type="date"></div>
 </div><br>
-<div class="card">
-<h3>Student Conduct</h3>
-<div class="row">
-<label><input type="radio" name="conduct" value="Excellent"> Excellent</label>
-<label><input type="radio" name="conduct" value="Very Good" checked> Very Good</label>
-<label><input type="radio" name="conduct" value="Good"> Good</label>
-<label><input type="radio" name="conduct" value="Satisfactory"> Satisfactory</label>
-<h3 style="width:100%">Activities</h3>
-<label><input type="checkbox" name="certAct" value="academic"> Academic</label>
-<label><input type="checkbox" name="certAct" value="sports"> Sports</label>
-<label><input type="checkbox" name="certAct" value="cultural"> Cultural</label>
-<label><input type="checkbox" name="certAct" value="co-curricular"> Co-curricular</label>
-</div></div>
 <div class="row">
 <button class="green" onclick="renderCertificate()">📄 Preview Certificate</button>
 <button class="secondary no-print" onclick="printCertificate()">🖨️ Print Certificate</button>
