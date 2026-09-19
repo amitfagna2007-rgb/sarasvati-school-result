@@ -342,6 +342,29 @@ function renderReport(){
   if(!selectedExam){out.innerHTML='<p class="muted">पहले परीक्षा चुनें।</p>';return;}
   if(!subs.length){out.innerHTML='<p class="muted">इस कक्षा में कोई academic subject निर्धारित नहीं है।</p>';return;}
 
+  if(selectedExam==='__ALL__'){
+    const exams=reportExamsForStudent(s);
+    if(!exams.length){out.innerHTML='<p class="muted">इस विद्यार्थी की कोई परीक्षा नहीं मिली।</p>';return;}
+    const getMark=(exam,sub)=>marks.find(m=>m.studentId===s.id&&m.exam===exam&&String(m.subject||'').trim().toLowerCase()===String(sub).trim().toLowerCase());
+    let grandTotal=0,grandMax=0;
+    const head=exams.map(ex=>'<th>'+esc(ex)+'</th>').join('');
+    const rows=subs.map(sub=>{
+      let cells='',st=0,sm=0;
+      exams.forEach(ex=>{
+        const m=getMark(ex,sub);
+        const v=m&&Number.isFinite(Number(m.score))?Number(m.score):null;
+        const mx=m&&Number(m.total)>0?Number(m.total):null;
+        if(v!==null){st+=v;sm+=mx||100;}
+        cells+='<td>'+(v===null?'—':esc(v)+(mx?'/'+esc(mx):''))+'</td>';
+      });
+      grandTotal+=st;grandMax+=sm;
+      return '<tr><td class="left">'+esc(sub)+'</td>'+cells+'<td><b>'+st+'/'+sm+'</b></td></tr>';
+    }).join('');
+    const pct=grandMax?grandTotal/grandMax*100:0;
+    out.innerHTML='<div class="report-sheet normal-report report-combined"><div class="normal-report-head"><div class="school">SARASVATI BAL VIDHYA MANDIR SAKARGHATA</div><div class="report-title">REPORT CARD</div><div class="report-session">Academic Session: 2026–27</div></div><div class="normal-details"><div><b>Student Name:</b> '+esc(s.name)+'</div><div><b>Father\'s Name:</b> '+esc(s.father||'—')+'</div><div><b>Mother\'s Name:</b> '+esc(s.mother||'—')+'</div><div><b>Class:</b> '+esc(s.cls)+'</div><div><b>Roll Number:</b> '+esc(s.roll)+'</div><div><b>Examination:</b> सभी टेस्ट</div></div><div class="report-section-title">Academic Performance — All Tests</div><div class="report-marks combined-marks"><table><tr><th>Subject</th>'+head+'<th>Total</th></tr>'+rows+'<tr class="combined-total"><td class="left"><b>Grand Total</b></td><td colspan="'+exams.length+'"></td><td><b>'+grandTotal+'/'+grandMax+'</b></td></tr><tr class="combined-percent"><td class="left"><b>Percentage</b></td><td colspan="'+exams.length+'"></td><td><b>'+pct.toFixed(2)+'%</b></td></tr></table></div><div class="normal-summary"><div><b>Total Marks</b><span>'+grandTotal+'/'+grandMax+'</span></div><div><b>Percentage</b><span>'+pct.toFixed(2)+'%</span></div><div><b>Overall Grade</b><span>'+gradeFor(pct)+'</span></div><div><b>Class Rank</b><span>—</span></div></div><div class="combined-note">नोट: जिस टेस्ट/विषय के अंक दर्ज नहीं हैं, वहाँ — दिखाई देगा।</div></div>';
+    return;
+  }
+
   const a=marks.filter(m=>m.studentId===s.id&&m.exam===selectedExam&&subs.some(sub=>String(sub).trim().toLowerCase()===String(m.subject||'').trim().toLowerCase()));
   if(!a.length){out.innerHTML='<p class="muted">इस परीक्षा में इस विद्यार्थी के academic marks अभी दर्ज नहीं हैं।</p>';return;}
 
