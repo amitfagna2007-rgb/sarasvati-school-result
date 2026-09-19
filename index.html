@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173f67">
-<meta name="app-version" content="1.4.27">
+<meta name="app-version" content="1.4.28">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=4">
 <link rel="apple-touch-icon" href="icon-192.png?v=4">
@@ -91,7 +91,7 @@
 <p class="muted">विद्यार्थी चुनें और certificate अपने-आप तैयार करें।</p>
 <div class="grid">
 <div><label><b>विद्यार्थी (Student)</b></label><input id="certStudentSearch" oninput="filterCertificateStudents()" placeholder="विद्यार्थी का नाम खोजें"><select id="certStudent" onchange="certificateStudentChanged()"></select></div>
-<div><label><b>Certificate No. (प्रमाण-पत्र संख्या)</b></label><input id="certNo" placeholder="Certificate No."></div>
+<div><label><b>Sr. No. (क्रम संख्या)</b></label><input id="certNo" placeholder="Sr. No."></div>
 <div><label><b>Certificate Date (आज की/जारी करने की तारीख)</b></label><input id="certDate" type="date"></div>
 <div><label><b>Academic Session (शैक्षणिक सत्र)</b></label><input id="certSession" value="2026–27" placeholder="Academic Session"></div>
 <div><label><b>Date of Birth / DOB (जन्म तिथि)</b></label><input id="certDob" type="date"></div>
@@ -556,7 +556,7 @@ function certificateHTML(){
       This is to certify that <b>${esc(s.name)}</b> S/O <b>${esc(s.father||'________________')}</b> date of birth <b>${esc(fmt(dob))}</b>
     </div>
     <div class="certificate-body">
-      <b>SR.NO ${esc(document.getElementById('certNo').value.trim()||'__________')}</b> is a regular student during the year <b>${esc(session)}</b> IN CLASS <b>-${esc(s.cls)}</b>
+      <b>SR. NO. ${esc(document.getElementById('certNo').value.trim()||'__________')}</b> is a regular student during the year <b>${esc(session)}</b> IN CLASS <b>-${esc(s.cls)}</b>
     </div>
     <div class="certificate-body">
       As per school record his/her character and conduct is <b>EXCELLENT</b> to my knowledge .
