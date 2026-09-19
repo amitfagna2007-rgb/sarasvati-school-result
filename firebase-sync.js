@@ -66,15 +66,9 @@
       const ref=userRef();
       const local=localData();
       recoverySave(local);
-      const snap=await ref.get();
-      if(snap.exists){
-        const merged=mergeCloudAndLocal(snap.data(),local);
-        putLocal(merged);
-        await ref.set({...merged,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-        notifyUpdate();
-      }else{
-        await ref.set({...local,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-      }
+      // A normal local save is authoritative. Do not merge with the old cloud
+      // snapshot here, otherwise deleted students/subjects/marks would come back.
+      await ref.set({...local,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
       return true;
     }catch(e){console.warn('Cloud sync save failed',e);return false;}
     finally{saving=false;}
@@ -97,10 +91,12 @@
     if(unsub)unsub();
     unsub=ref.onSnapshot(s=>{
       if(!s.exists||saving)return;
-      const incoming=clean(s.data()),now=localData(),merged=mergeCloudAndLocal(incoming,now);
-      if(hasData(merged)&&!same(merged,now)){
-        recoverySave(merged);
-        putLocal(merged);
+      const incoming=clean(s.data()),now=localData();
+      // Cloud changes from another device are authoritative. Do not union
+      // records here, because a union would resurrect items deleted locally.
+      if(hasData(incoming)&&!same(incoming,now)){
+        recoverySave(now);
+        putLocal(incoming);
         notifyUpdate();
       }
     });
