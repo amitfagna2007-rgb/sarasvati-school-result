@@ -252,7 +252,10 @@ function renderResult(){
   fillExams();
   const ex=rexam.value;
   if(!ex){resultTable.innerHTML='<p class="muted">इस कक्षा/सेक्शन के लिए कोई परीक्षा नहीं मिली।</p>';return;}
-  const subs=academicSubjects(cls);
+  const subs=academicSubjects(cls).filter(sub=>{
+    const key=normalizeKey(sub).replace(/&/g,'and').replace(/\s+/g,' ');
+    return !(key.includes('health') && key.includes('physical education'));
+  });
   const list=students.filter(s=>normalizeKey(s.cls)===normalizeKey(cls)&&normalizeKey(s.sec)===normalizeKey(sec));
   if(!list.length){resultTable.innerHTML='<p class="muted">इस कक्षा/सेक्शन में कोई विद्यार्थी नहीं मिला।</p>';return;}
 
