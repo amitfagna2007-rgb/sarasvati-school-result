@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173f67">
-<meta name="app-version" content="1.4.23">
+<meta name="app-version" content="1.4.25">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=4">
 <link rel="apple-touch-icon" href="icon-192.png?v=4">
@@ -32,7 +32,7 @@
 <section id="students" class="page"><div class="card"><h2>👨‍🎓 विद्यार्थी जोड़ें</h2><div class="grid"><input id="sn" placeholder="विद्यार्थी का नाम"><input id="sr" placeholder="रोल नंबर"><select id="sc"></select><input id="ss" placeholder="सेक्शन" value="A"><input id="sf" placeholder="अभिभावक का नाम"><input id="sm" placeholder="माता का नाम"><input id="sp" placeholder="Parent Mobile" inputmode="tel" maxlength="15"></div><br><button class="green" onclick="addStudent()">+ विद्यार्थी जोड़ें</button></div><div class="card"><div class="row"><h2 style="margin-right:auto">विद्यार्थी सूची</h2><select id="filterClass" onchange="renderStudents()"></select><select id="filterSec" onchange="renderStudents()"><option value="">सभी सेक्शन</option><option>A</option><option>B</option><option>C</option></select><input id="studentSearch" oninput="renderStudents()" placeholder="नाम/रोल/मोबाइल/अभिभावक खोजें"></div><div class="scroll" id="studentList"></div></div></section>
 <section id="subjects" class="page"><div class="card"><h2>📚 कक्षा के विषय</h2><p class="muted">हर कक्षा के लिए विषय अलग रख सकते हैं।</p><div class="row"><select id="subClass"></select><input id="subName" placeholder="नया विषय, जैसे Hindi"><button onclick="addSubject()">+ विषय जोड़ें</button></div><div id="subjectList"></div></div></section>
 <section id="marks" class="page"><div class="card"><h2>📝 Marks Entry — सभी विषयों के अंक</h2><div class="grid"><select id="mc" onchange="loadMarks(true)"></select><select id="msec" onchange="loadMarks(true)"><option>A</option><option>B</option><option>C</option></select><input id="exam" placeholder="परीक्षा नाम, जैसे Unit Test-1"><select id="msub" onchange="loadMarks(true)"></select><input id="mtotal" type="number" value="100" min="1" placeholder="पूर्णांक"></div><div class="notice">Physical Education और Art Education भी इसी Marks Entry में मिलेंगे। ये दोनों Report Card में नहीं दिखेंगे। एक ही परीक्षा में विषय बदलकर हर विषय के अंक सेव करें। पुराने अंक edit करके फिर से Save किए जा सकते हैं।</div><div class="scroll" id="marksTable"></div></div></section>
-<section id="result" class="page"><div class="card"><h2>🏆 कक्षा परिणाम और रैंक</h2><div class="row"><select id="rc" onchange="fillExams()"></select><select id="rsec" onchange="fillExams()"><option>A</option><option>B</option><option>C</option></select><select id="rexam"></select><button onclick="renderResult()">परिणाम देखें</button><button class="secondary" onclick="window.print()">🖨️ प्रिंट</button><button class="green" onclick="downloadResultPDF()">📥 परिणाम PDF</button></div><div class="notice">रैंक केवल उन विद्यार्थियों की बनेगी जिनके सभी निर्धारित विषयों के अंक दर्ज हैं। अधूरे रिकॉर्ड को “अपूर्ण” दिखाया जाएगा। बराबर प्रतिशत पर समान रैंक मिलेगी।</div><div id="resultTable"></div></div></section>
+<section id="result" class="page"><div class="card"><h2>🏆 कक्षा परिणाम और रैंक</h2><div class="row"><select id="rc" onchange="fillExams()"></select><select id="rsec" onchange="fillExams()"><option value="">सेक्शन चुनें</option></select><select id="rexam"></select><button onclick="renderResult()">परिणाम देखें</button><button class="secondary" onclick="window.print()">🖨️ प्रिंट</button><button class="green" onclick="downloadResultPDF()">📥 परिणाम PDF</button></div><div class="notice">रैंक केवल उन विद्यार्थियों की बनेगी जिनके सभी निर्धारित विषयों के अंक दर्ज हैं। अधूरे रिकॉर्ड को “अपूर्ण” दिखाया जाएगा। बराबर प्रतिशत पर समान रैंक मिलेगी।</div><div id="resultTable"></div></div></section>
 <section id="report" class="page"><div class="card"><h2 class="no-print">📄 विद्यार्थी रिपोर्ट कार्ड</h2><div class="row no-print"><select id="rep" onchange="updateReportExams()"></select><select id="repExam"><option value="">परीक्षा चुनें</option></select><button onclick="renderReport()">रिपोर्ट दिखाएँ</button><button class="secondary" onclick="window.print()">🖨️ प्रिंट</button><button class="green" onclick="downloadReportPDF()">📥 Download PDF</button></div><div class="notice no-print">PDF बटन दबाने पर print window खुलेगा। वहाँ <b>Save as PDF</b> चुनकर normal report card PDF में सेव करें। मोबाइल और लैपटॉप दोनों पर काम करेगा।</div><div id="reportCard"></div></div></section>
 <section id="marksheet" class="page">
   <div class="card">
@@ -94,7 +94,7 @@
 <section id="backup" class="page"><div class="card"><h2>☁️ Cloud Data Restore</h2><p>Firebase cloud में सुरक्षित school data को इस device पर वापस लाएँ। Restore से पहले current local data का recovery backup अपने-आप बन जाएगा।</p><button class="green" onclick="restoreCloudData()">☁️ Cloud से Data Restore करें</button><div id="cloudRestoreStatus" class="notice">School Result Login के बाद इस button को दबाएँ।</div></div><div class="card"><h2>💾 Backup / Restore</h2><p>Backup डाउनलोड करके सुरक्षित रखें। दूसरे कंप्यूटर पर Restore किया जा सकता है।</p><button onclick="backup()">⬇️ Backup डाउनलोड</button><label><input type="file" id="restoreFile" accept=".json" onchange="restore(this.files[0])"> Backup Restore करें</label></div><div class="card"><h2>🔄 App Update</h2><p>App का code online update हो सकता है। विद्यार्थी, विषय और अंक <b>localStorage</b> में अलग रहते हैं, इसलिए सामान्य code update से data delete नहीं होता।</p><div class="row"><strong>Installed version:</strong> <span id="appVersion">1.4.24</span><button class="green" onclick="checkForUpdate(true)">🔍 Check for Update</button></div><div id="updateStatus" class="notice">Update system तैयार है।</div></div></section>
 </main>
 <script>
-const APP_VERSION='1.4.24';
+const APP_VERSION='1.4.25';
 const CLASSES=['Nursery','LKG','UKG',...Array.from({length:12},(_,i)=>'Class '+(i+1))];
 const defaultSubjects={Nursery:['Hindi','English','Maths','EVS'],LKG:['Hindi','English','Maths','EVS'],UKG:['Hindi','English','Maths','EVS']};
 function readJSON(key,fallback){
@@ -151,6 +151,7 @@ function init(){
   bindElements();
   opts('sc',false);opts('mc',false);opts('rc',false);opts('subClass',false);opts('filterClass',true);
   filterClass.value='';sc.value='Class 1';mc.value='Class 1';rc.value='Class 1';subClass.value='Class 1';
+  fillResultSections();
   refresh();loadMarks(false);registerSW();setTimeout(()=>checkForUpdate(false),1200);
 }
 function page(id){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');refresh();if(id==='marks')loadMarks(false);}
@@ -165,8 +166,39 @@ function subjectOptions(cls,selected){let a=marksSubjects(cls);msub.innerHTML=a.
 function loadMarks(keep=true){let cls=mc.value||'Class 1',previous=keep?msub.value:'';subjectOptions(cls,previous);let sec=msec.value||'A',ex=exam.value.trim(),sub=msub.value;let a=students.filter(s=>s.cls===cls&&s.sec===sec);if(!a.length){marksTable.innerHTML='<p class="muted">इस कक्षा/सेक्शन में अभी विद्यार्थी नहीं हैं।</p>';return;}let h='<table><tr><th>रोल</th><th>विद्यार्थी</th><th>पूर्णांक</th><th>प्राप्तांक</th><th>स्थिति</th></tr>';a.sort((x,y)=>String(x.roll).localeCompare(String(y.roll),undefined,{numeric:true})).forEach(s=>{let r=marks.find(m=>m.studentId===s.id&&m.cls===cls&&m.sec===sec&&m.exam===ex&&m.subject===sub);let val=r?.score??'';h+=`<tr><td>${esc(s.roll)}</td><td class="left">${esc(s.name)}</td><td><input class="marks-input" value="${esc(mtotal.value||100)}" type="number" min="1" onchange="changeTotal(this,'${s.id}')"></td><td><input class="marks-input score" data-student="${s.id}" value="${esc(val)}" type="number" min="0" max="${Number(mtotal.value||100)}"></td><td>${r?'Saved':'New'}</td></tr>`});h+='</table><br><button class="green" onclick="saveMarks()">💾 इस विषय के अंक Save करें</button>';marksTable.innerHTML=h;}
 function changeTotal(input,id){let old=Number(mtotal.value||100);let n=Number(input.value||old);if(n<1)n=1;mtotal.value=n;document.querySelectorAll('.score').forEach(x=>x.max=n);}
 function saveMarks(){let cls=mc.value,sec=msec.value,ex=exam.value.trim(),sub=msub.value,total=Number(mtotal.value||100);if(!ex)return alert('पहले परीक्षा/टेस्ट का नाम भरें।');if(!sub)return alert('पहले विषय चुनें।');let inputs=document.querySelectorAll('.score');inputs.forEach(inp=>{let id=inp.dataset.student,raw=inp.value.trim();let idx=marks.findIndex(m=>m.studentId===id&&m.cls===cls&&m.sec===sec&&m.exam===ex&&m.subject===sub);if(raw===''){if(idx>=0)marks.splice(idx,1);return;}let score=Number(raw);if(!Number.isFinite(score)||score<0||score>total)return;let rec={studentId:id,cls,sec,exam:ex,subject:sub,total,score};if(idx>=0)marks[idx]=rec;else marks.push(rec);});save();loadMarks(true);alert('इस विषय के अंक सेव हो गए। अब subject बदलकर अगले विषय के अंक भर सकते हैं।');}
-function examsFor(cls,sec){return [...new Set(marks.filter(m=>m.cls===cls&&m.sec===sec).map(m=>m.exam).filter(Boolean))].sort();}
+function resultSections(cls){
+  const key=normalizeKey(cls);
+  const out=new Map();
+  students.filter(s=>normalizeKey(s.cls)===key).forEach(s=>{
+    const sec=String(s.sec||'').trim();
+    if(sec)out.set(normalizeKey(sec),sec);
+  });
+  marks.filter(m=>normalizeKey(m.cls)===key).forEach(m=>{
+    const sec=String(m.sec||'').trim();
+    if(sec)out.set(normalizeKey(sec),sec);
+  });
+  return [...out.values()].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+}
+function fillResultSections(){
+  const secEl=document.getElementById('rsec');
+  if(!secEl)return;
+  const old=secEl.value;
+  const list=resultSections(document.getElementById('rc')?.value||'');
+  secEl.innerHTML='<option value="">सेक्शन चुनें</option>'+list.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');
+  if(old&&list.some(x=>normalizeKey(x)===normalizeKey(old)))secEl.value=list.find(x=>normalizeKey(x)===normalizeKey(old));
+  else if(list.length)secEl.value=list[0];
+}
+function examsFor(cls,sec){
+  const c=normalizeKey(cls),s=normalizeKey(sec);
+  const out=new Map();
+  marks.filter(m=>normalizeKey(m.cls)===c&&normalizeKey(m.sec)===s).forEach(m=>{
+    const ex=String(m.exam||'').trim();
+    if(ex)out.set(normalizeKey(ex),ex);
+  });
+  return [...out.values()].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+}
 function fillExams(){
+  fillResultSections();
   const cls=rc.value,sec=rsec.value;
   const a=examsFor(cls,sec);
   const old=rexam.value;
@@ -502,8 +534,8 @@ async function restoreCloudData(){
 function backup(){let data={app:'SBVM Result',version:APP_VERSION,exportedAt:new Date().toISOString(),students,subjects,marks};let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SBVM-Result-Backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);}
 function restore(file){if(!file)return;let r=new FileReader();r.onload=()=>{try{let text=String(r.result||'').replace(/^\\uFEFF/,'').trim();if(!text)throw new Error('empty');let d=JSON.parse(text);let src=d&&d.data&&typeof d.data==='object'?d.data:d;let st=Array.isArray(src.students)?src.students:(Array.isArray(src.sbvm2_students)?src.sbvm2_students:null);let su=src.subjects&&typeof src.subjects==='object'?src.subjects:null;let mk=Array.isArray(src.marks)?src.marks:(Array.isArray(src.sbvm2_marks)?src.sbvm2_marks:null);if(!st||!su||!mk)throw new Error('invalid');if(!confirm('Restore करने से current data replace होगा। Continue?'))return;students=st;subjects=su;marks=mk;save();refresh();document.getElementById('restoreFile').value='';alert('Backup restore हो गया।\\nविद्यार्थी: '+students.length+'\\nअंक रिकॉर्ड: '+marks.length);}catch(e){document.getElementById('restoreFile').value='';console.error('Backup restore failed:',e);alert('Backup upload नहीं हो पाया।\\n\\nकारण: Backup file का format पहचाना नहीं गया या file खराब है।\\n\\nकृपया इसी app से डाउनलोड की गई .json backup file चुनें।');}};r.onerror=()=>{document.getElementById('restoreFile').value='';alert('Backup file पढ़ी नहीं जा सकी।');};r.readAsText(file);}
 function toggleLang(){lang=lang==='hi'?'en':'hi';let en=lang==='en';document.getElementById('langBtn').textContent=en?'हिंदी / English':'हिंदी / English';document.getElementById('subtitle').textContent=en?'Student • Marks • Rank • Report Card Management':'Student • Marks • Rank • Report Card Management';document.title=en?'Sarasvati School Result System':'Sarasvati Bal Vidhya Mandir - School Result System';}
-async function registerSW(){if(!('serviceWorker' in navigator))return;try{await navigator.serviceWorker.register('./sw.js?v=1.4.23');}catch(e){console.warn('SW registration failed',e);}}
-async function checkForUpdate(manual){let status=document.getElementById('updateStatus');try{let res=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});if(!res.ok)throw new Error('version check failed');let remote=await res.json();let rv=String(remote.version||APP_VERSION),iv=APP_VERSION;if(rv===iv){if(manual)status.textContent='आपके पास latest version 1.4.23 है।';return;}status.textContent='नया version '+rv+' उपलब्ध है। Update शुरू हो रहा है...';if('serviceWorker' in navigator){let reg=await navigator.serviceWorker.getRegistration('./');if(!reg)reg=await navigator.serviceWorker.register('./sw.js?v=1.4.23');await reg.update();if(reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'});return;}if(reg.installing){let w=reg.installing;w.addEventListener('statechange',()=>{if(w.state==='installed'&&navigator.serviceWorker.controller){w.postMessage({type:'SKIP_WAITING'});}});return;}location.reload();}}catch(e){if(manual)status.textContent='Update check नहीं हो पाया। Internet connection जाँचें और फिर कोशिश करें।';}}
+async function registerSW(){if(!('serviceWorker' in navigator))return;try{await navigator.serviceWorker.register('./sw.js?v=1.4.25');}catch(e){console.warn('SW registration failed',e);}}
+async function checkForUpdate(manual){let status=document.getElementById('updateStatus');try{let res=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});if(!res.ok)throw new Error('version check failed');let remote=await res.json();let rv=String(remote.version||APP_VERSION),iv=APP_VERSION;if(rv===iv){if(manual)status.textContent='आपके पास latest version 1.4.25 है।';return;}status.textContent='नया version '+rv+' उपलब्ध है। Update शुरू हो रहा है...';if('serviceWorker' in navigator){let reg=await navigator.serviceWorker.getRegistration('./');if(!reg)reg=await navigator.serviceWorker.register('./sw.js?v=1.4.25');await reg.update();if(reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'});return;}if(reg.installing){let w=reg.installing;w.addEventListener('statechange',()=>{if(w.state==='installed'&&navigator.serviceWorker.controller){w.postMessage({type:'SKIP_WAITING'});}});return;}location.reload();}}catch(e){if(manual)status.textContent='Update check नहीं हो पाया। Internet connection जाँचें और फिर कोशिश करें।';}}
 window.addEventListener('load',init);
 </script>
 </body>
