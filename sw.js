@@ -17,7 +17,7 @@ self.addEventListener('fetch', event => {
   const isVersion = url.pathname.endsWith('/version.json');
   const isManifest = url.pathname.endsWith('/manifest.json');
   if(isVersion){
-    event.respondWith(new Response('{"version":"1.4.23","updated":"2026-09-18","notes":"Repaired app startup, navigation, report selector and cloud restore"}',{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}}));
+    event.respondWith(new Response('{"version":"1.4.24","updated":"2026-09-19","notes":"Fixed Parinaam/Rank exam selection and robust marks matching"}',{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}}));
     return;
   }
   if(isIndex){
