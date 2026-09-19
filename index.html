@@ -38,6 +38,15 @@
  .rank-result-table .name-col{min-width:0}
  .rank-result-note{font-size:9px;padding:6px 0;background:#fff;border:0}
 }
+
+/* Studying Certificate approved format */
+.certificate-head .certificate-school{font-size:20px;font-weight:800;line-height:1.25;margin-top:3px}
+.certificate-head .certificate-sub{font-size:17px;font-weight:800;letter-spacing:1px;margin-top:9px}
+.certificate-body{font-size:14px;line-height:1.7;text-align:justify;margin:14px 0}
+.certificate-date{font-size:13px;margin-top:28px}
+.certificate-sign.single-sign{display:block;margin-top:55px;text-align:right;font-size:12px}
+.certificate-sign.single-sign div{border:0;padding-top:4px}
+.certificate-logo{width:70px;height:70px;object-fit:contain;margin-bottom:5px}
 </style>
 </head>
 <body>
@@ -515,27 +524,37 @@ function certificateActivities(){
   return a.length===1?a[0]+' activities':a.slice(0,-1).join(', ')+' and '+a[a.length-1]+' activities';
 }
 function certificateHTML(){
-  let s=students.find(x=>x.id===document.getElementById('certStudent').value);
+  const s=students.find(x=>x.id===document.getElementById('certStudent').value);
   if(!s)return '<p class="muted">पहले विद्यार्थी चुनें।</p>';
-  let no=document.getElementById('certNo').value.trim()||'__________';
-  let date=document.getElementById('certDate').value||'';
-  let purpose=document.getElementById('certPurpose').value.trim()||'__________';
-  let session=document.getElementById('certSession').value.trim()||'2026–27';
-  let dob=document.getElementById('certDob').value||'';
-  let fmt=x=>x?new Date(x+'T00:00:00').toLocaleDateString('en-IN'):'__________';
+  const date=document.getElementById('certDate').value||'';
+  const session=document.getElementById('certSession').value.trim()||'2026–27';
+  const dob=document.getElementById('certDob').value||'';
+  const fmt=x=>x?new Date(x+'T00:00:00').toLocaleDateString('en-IN'):'__________';
   return `<div class="certificate-sheet"><div class="certificate-inner">
-  <div class="certificate-head"><img src="./icon-192.png?v=4" class="certificate-logo">
-  <div class="certificate-school">SARASVATI BAL VIDHYA MANDIR SAKARGHATA</div>
-  <div class="certificate-sub">STUDYING CERTIFICATE</div></div>
-  <div class="certificate-meta"><span>Certificate No.: <b>${esc(no)}</b></span><span>Date: <b>${esc(fmt(date))}</b></span></div>
-  <p class="certificate-body">This is to certify that <b>${esc(s.name)}</b>, S/o / D/o <b>${esc(s.father||'________________')}</b>, is a bonafide student of <b>${esc(s.cls)}</b>, Section <b>${esc(s.sec)}</b>, Roll No. <b>${esc(s.roll)}</b> of Sarasvati Bal Vidhya Mandir Sakargatha.</p>
-  <p class="certificate-body">He/She has been studying in this school during the academic session <b>${esc(session)}</b> and has been regularly associated with the school and its academic activities.</p>
-  <p class="certificate-body">During the period of study, the student has demonstrated <b>${esc(certificateConduct())}</b> conduct, discipline, sincerity and respect towards teachers and fellow students. He/She has shown a cooperative and positive attitude and has participated in <b>${esc(certificateActivities())}</b> as applicable.</p>
-  <p class="certificate-body">As per our school records, his/her date of birth is <b>${esc(fmt(dob))}</b>.</p>
-  <p class="certificate-body">This certificate is issued at the request of the student/parent for <b>${esc(purpose)}</b> purpose.</p>
-  <p class="certificate-wish">We wish the student continued success and a bright future.</p>
-  <div class="certificate-sign"><div>Class Teacher's Signature</div><div>Principal's Signature</div></div>
-  <div class="certificate-bottom"><span>Place: Sakargatha</span><span>School Seal</span><span>Date: ${esc(fmt(date))}</span></div>
+    <div class="certificate-head">
+      <img src="./icon-192.png?v=4" class="certificate-logo">
+      <div class="certificate-school">SARASVATI BAL VIDHYA MANDIR</div>
+      <div class="certificate-school">UPPER PRIMARY SCHOOL</div>
+      <div class="certificate-sub">TO WHOM IT MAY CONCERN</div>
+      <div class="certificate-sub">STUDYING CERTIFICATE</div>
+    </div>
+    <div class="certificate-body">
+      This is to certify that <b>${esc(s.name)}</b> S/O <b>${esc(s.father||'________________')}</b> date of birth <b>${esc(fmt(dob))}</b>
+    </div>
+    <div class="certificate-body">
+      <b>SR.NO ${esc(document.getElementById('certNo').value.trim()||'__________')}</b> is a regular student during the year <b>${esc(session)}</b> IN CLASS <b>-${esc(s.cls)}</b>
+    </div>
+    <div class="certificate-body">
+      As per school record his/her character and conduct is <b>EXCELLENT</b> to my knowledge .
+    </div>
+    <div class="certificate-body">
+      I wish his/her success in future life.
+    </div>
+    <div class="certificate-date"><b>DATE ${esc(fmt(date))}</b></div>
+    <div class="certificate-sign single-sign">
+      <div>[HEADMASTER SIGNATURE]</div>
+      <div><b>HEADMASTER</b></div>
+    </div>
   </div></div>`;
 }
 function renderCertificate(){
