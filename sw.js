@@ -23,9 +23,7 @@ self.addEventListener('fetch', event => {
   if(isIndex){
     event.respondWith(fetch(new Request(req.url,{cache:'no-store'})).then(async res=>{
       let text=await res.text();
-      // Keep the published HTML version aligned with the service worker until
-      // the next source update, and inject the tested Student Edit fix.
-      text=text.replace(/1\\.4\\.31/g,'1.4.32');
+      text=text.replace(/1\.4\.31/g,'1.4.32');
       if(!text.includes('edit-fix.js'))text=text.replace('</body>','<script src="./edit-fix.js?v=1"></script></body>');
       const headers=new Headers(res.headers);headers.set('content-type','text/html; charset=utf-8');
       const out=new Response(text,{status:res.status,statusText:res.statusText,headers});
