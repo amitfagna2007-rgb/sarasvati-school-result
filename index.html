@@ -544,7 +544,11 @@ function certificateHTML(){
   const date=document.getElementById('certDate').value||'';
   const session=document.getElementById('certSession').value.trim()||'2026–27';
   const dob=document.getElementById('certDob').value||'';
-  const fmt=x=>x?new Date(x+'T00:00:00').toLocaleDateString('en-IN'):'__________';
+  const fmt=x=>{
+    if(!x)return '__________';
+    const parts=String(x).split('-');
+    return parts.length===3 ? parts[2]+' '+parts[1]+' '+parts[0] : String(x);
+  };
   return `<div class="certificate-sheet"><div class="certificate-inner">
     <div class="certificate-head">
       <img src="./icon-192.png?v=4" class="certificate-logo">
