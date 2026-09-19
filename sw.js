@@ -1,5 +1,5 @@
-const CACHE_NAME = 'sarasvati-school-v1.4.31';
-const APP_ASSETS = ['./','./index.html','./manifest.json','./version.json','./icon-192.png?v=4','./firebase-login.js?v=3','./firebase-sync.js?v=4'];
+const CACHE_NAME = 'sarasvati-school-v1.4.32';
+const APP_ASSETS = ['./','./index.html','./manifest.json','./version.json','./icon-192.png?v=4','./firebase-login.js?v=3','./firebase-sync.js?v=4','./edit-fix.js?v=1'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_ASSETS)).then(() => self.skipWaiting()));
 });
@@ -13,15 +13,25 @@ self.addEventListener('fetch', event => {
   const url = new URL(req.url);
   if(url.origin !== self.location.origin) return;
   const isIndex = url.pathname.endsWith('/index.html') || url.pathname.endsWith('/');
-  const isAppScript = url.pathname.endsWith('/firebase-login.js') || url.pathname.endsWith('/firebase-sync.js');
+  const isAppScript = url.pathname.endsWith('/firebase-login.js') || url.pathname.endsWith('/firebase-sync.js') || url.pathname.endsWith('/edit-fix.js');
   const isVersion = url.pathname.endsWith('/version.json');
   const isManifest = url.pathname.endsWith('/manifest.json');
   if(isVersion){
-    event.respondWith(new Response('{"version":"1.4.31","updated":"2026-09-19","notes":"Added class change option to Student Edit."}',{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}}));
+    event.respondWith(new Response('{"version":"1.4.32","updated":"2026-09-19","notes":"Fixed Student Edit saving and stale cloud overwrite."}',{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}}));
     return;
   }
   if(isIndex){
-    event.respondWith(fetch(new Request(req.url,{cache:'no-store'})).then(async res=>{const text=await res.text();const headers=new Headers(res.headers);headers.set('content-type','text/html; charset=utf-8');const out=new Response(text,{status:res.status,statusText:res.statusText,headers});caches.open(CACHE_NAME).then(c=>c.put('./index.html',out.clone()));return out;}).catch(()=>caches.match('./index.html')));
+    event.respondWith(fetch(new Request(req.url,{cache:'no-store'})).then(async res=>{
+      let text=await res.text();
+      // Keep the published HTML version aligned with the service worker until
+      // the next source update, and inject the tested Student Edit fix.
+      text=text.replace(/1\\.4\\.31/g,'1.4.32');
+      if(!text.includes('edit-fix.js'))text=text.replace('</body>','<script src="./edit-fix.js?v=1"></script></body>');
+      const headers=new Headers(res.headers);headers.set('content-type','text/html; charset=utf-8');
+      const out=new Response(text,{status:res.status,statusText:res.statusText,headers});
+      caches.open(CACHE_NAME).then(c=>c.put('./index.html',out.clone()));
+      return out;
+    }).catch(()=>caches.match('./index.html')));
     return;
   }
   if(isAppScript || isManifest){
