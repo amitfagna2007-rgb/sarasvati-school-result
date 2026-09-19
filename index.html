@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173f67">
-<meta name="app-version" content="1.4.26">
+<meta name="app-version" content="1.4.27">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=4">
 <link rel="apple-touch-icon" href="icon-192.png?v=4">
@@ -74,6 +74,7 @@
   <div class="card">
     <h2 class="no-print">📑 विद्यार्थी Marksheet</h2>
     <div class="row no-print">
+      <input id="msheetStudentSearch" oninput="filterMarksheetStudents()" placeholder="विद्यार्थी का नाम खोजें">
       <select id="msheetStudent" onchange="renderMarksheetSelectors()"></select>
       <select id="msheetExam"><option value="">परीक्षा चुनें</option></select>
       <button onclick="renderMarksheet()">Marksheet दिखाएँ</button>
@@ -89,7 +90,7 @@
 <h2>📜 Studying Certificate</h2>
 <p class="muted">विद्यार्थी चुनें और certificate अपने-आप तैयार करें।</p>
 <div class="grid">
-<div><label><b>विद्यार्थी (Student)</b></label><select id="certStudent"></select></div>
+<div><label><b>विद्यार्थी (Student)</b></label><input id="certStudentSearch" oninput="filterCertificateStudents()" placeholder="विद्यार्थी का नाम खोजें"><select id="certStudent" onchange="certificateStudentChanged()"></select></div>
 <div><label><b>Certificate No. (प्रमाण-पत्र संख्या)</b></label><input id="certNo" placeholder="Certificate No."></div>
 <div><label><b>Certificate Date (आज की/जारी करने की तारीख)</b></label><input id="certDate" type="date"></div>
 <div><label><b>Academic Session (शैक्षणिक सत्र)</b></label><input id="certSession" value="2026–27" placeholder="Academic Session"></div>
@@ -409,7 +410,7 @@ function renderMarksheetSelectors(){
   const ex=document.getElementById('msheetExam');
   if(!e||!ex)return;
   const oldStudent=e.value, oldExam=ex.value;
-  e.innerHTML='<option value="">विद्यार्थी चुनें</option>'+students.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(st=>`<option value="${esc(st.id)}">${esc(st.name)} — ${esc(st.cls)} ${esc(st.sec)} / ${esc(st.roll)}</option>`).join('');
+  e.innerHTML=buildStudentOptions(students);
   if(oldStudent&&students.some(st=>st.id===oldStudent))e.value=oldStudent;
   const st=students.find(x=>x.id===e.value);
   const exams=st?examsFor(st.cls,st.sec):[];
@@ -488,10 +489,38 @@ function printMarksheet(){
 
 function downloadMarksheetPDF(){printMarksheet();}
 
+function buildStudentOptions(list,placeholder='विद्यार्थी चुनें'){
+  return '<option value="">'+placeholder+'</option>'+list.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+' — '+esc(s.cls)+' '+esc(s.sec)+' / '+esc(s.roll)+'</option>').join('');
+}
+function filterCertificateStudents(){
+  const e=document.getElementById('certStudent'), q=(document.getElementById('certStudentSearch')?.value||'').trim().toLowerCase();
+  if(!e)return;
+  const old=e.value;
+  const list=q?students.filter(s=>String(s.name||'').toLowerCase().includes(q)):students;
+  e.innerHTML=buildStudentOptions(list);
+  if(old&&list.some(s=>s.id===old))e.value=old;
+  else if(list.length===1)e.value=list[0].id;
+  certificateStudentChanged();
+}
+function certificateStudentChanged(){
+  const e=document.getElementById('certStudent'), dob=document.getElementById('certDob');
+  const s=e?students.find(x=>x.id===e.value):null;
+  if(s&&dob&&s.dob)dob.value=s.dob;
+}
+function filterMarksheetStudents(){
+  const e=document.getElementById('msheetStudent'), q=(document.getElementById('msheetStudentSearch')?.value||'').trim().toLowerCase();
+  if(!e)return;
+  const old=e.value;
+  const list=q?students.filter(s=>String(s.name||'').toLowerCase().includes(q)):students;
+  e.innerHTML=buildStudentOptions(list);
+  if(old&&list.some(s=>s.id===old))e.value=old;
+  else if(list.length===1)e.value=list[0].id;
+  renderMarksheetSelectors();
+}
 function renderCertificateSelectors(){
   let e=document.getElementById('certStudent'); if(!e)return;
   let old=e.value;
-  e.innerHTML=students.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(s=>`<option value="${esc(s.id)}">${esc(s.name)} — ${esc(s.cls)} ${esc(s.sec)} / ${esc(s.roll)}</option>`).join('');
+  e.innerHTML=buildStudentOptions(students);
   if(old&&students.some(s=>s.id===old))e.value=old;
   let s=students.find(x=>x.id===e.value),dob=document.getElementById('certDob'),date=document.getElementById('certDate');
   if(s&&dob&&!dob.value&&s.dob)dob.value=s.dob;
