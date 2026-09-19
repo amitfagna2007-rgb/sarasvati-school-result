@@ -1,4 +1,24 @@
 (function(){
+  function sbvmRead(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}}
+  function sbvmData(){return {students:sbvmRead('sbvm2_students',[]),subjects:sbvmRead('sbvm2_subjects',{}),marks:sbvmRead('sbvm2_marks',[])}}
+  function sbvmSize(d){return (Array.isArray(d.students)?d.students.length:0)*100+(Array.isArray(d.marks)?d.marks.length:0)*10+Object.values(d.subjects&&typeof d.subjects==='object'?d.subjects:{}).reduce((n,v)=>n+(Array.isArray(v)?v.length:0),0)}
+  function sbvmHas(d){return sbvmSize(d)>0}
+  function sbvmPut(d){localStorage.setItem('sbvm2_students',JSON.stringify(d.students||[]));localStorage.setItem('sbvm2_subjects',JSON.stringify(d.subjects||{}));localStorage.setItem('sbvm2_marks',JSON.stringify(d.marks||[]))}
+  async function recover(){
+    try{
+      const local=sbvmData(), backup=sbvmRead('sbvm2_recovery_backup',null);
+      if(backup&&sbvmHas(backup)&&sbvmSize(backup)>sbvmSize(local)){sbvmPut(backup);window.dispatchEvent(new CustomEvent('sbvm-cloud-update'));if(typeof window.refresh==='function')window.refresh()}
+      if(window.sbvmCloud&&window.sbvmCloud.ready&&sbvmSize(sbvmData())===0){
+        const r=await window.sbvmCloud.restore();
+        if(r&&r.students)window.dispatchEvent(new CustomEvent('sbvm-cloud-update'));
+      }
+    }catch(e){console.warn('SBVM automatic recovery:',e)}
+  }
+  window.addEventListener('load',()=>setTimeout(recover,1200));
+  window.addEventListener('sbvm-cloud-update',()=>setTimeout(()=>{if(typeof window.refresh==='function')window.refresh()},50));
+})();
+
+(function(){
   function editStudentFixed(id){
     const s=students.find(x=>String(x.id)===String(id));
     if(!s)return alert('विद्यार्थी नहीं मिला।');
