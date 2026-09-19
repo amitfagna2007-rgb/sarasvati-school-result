@@ -1,5 +1,5 @@
 const CACHE_NAME='sarasvati-school-v1.4.38';
-const APP_ASSETS=['./','./index.html','./manifest.json','./version.json','./icon-192.png?v=4','./firebase-login.js?v=4','./firebase-sync.js?v=7'];
+const APP_ASSETS=['./','./index.html','./manifest.json','./version.json','./icon-192.png?v=4','./firebase-login.js?v=4','./firebase-sync.js?v=7','./edit-fix.js?v=2'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(APP_ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('message',event=>{if(event.data&&event.data.type==='SKIP_WAITING')self.skipWaiting()});
