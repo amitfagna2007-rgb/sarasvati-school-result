@@ -1,1 +1,1 @@
-{"version":"1.4.43","updated":"2026-09-25","notes":"Add a safe delete option for marks tests and their related marks."}
+{"version":"1.4.44","updated":"2026-09-25","notes":"Keep result serial numbers sequential and fixed after rank sorting; roll number and student details move with the ranked student."}
