@@ -342,16 +342,21 @@ function fillExams(){
 }
 function normalizeKey(v){return String(v??'').trim().toLowerCase();}
 function resultMarkFor(student,cls,ex,sub){
-  const sid=student.id;
+  // Result must use ONLY the mark belonging to this exact student,
+  // current class/section, selected exam and selected subject.
+  // Never fall back to another class/section record, because that can
+  // display an old/wrong mark after a student is moved or promoted.
+  const sid=String(student.id);
+  const wantCls=normalizeKey(cls);
+  const wantSec=normalizeKey(student.sec);
+  const wantEx=normalizeKey(ex);
   const wantSub=normalizeKey(sub);
-  return marks.find(m=>String(m.studentId)===String(sid)
-    && normalizeKey(m.exam)===normalizeKey(ex)
-    && normalizeKey(m.subject)===wantSub
-    && (!m.cls || normalizeKey(m.cls)===normalizeKey(cls))
-    && (!m.sec || normalizeKey(m.sec)===normalizeKey(student.sec)))
-    || marks.find(m=>String(m.studentId)===String(sid)
-    && normalizeKey(m.exam)===normalizeKey(ex)
+  const matches=marks.filter(m=>String(m.studentId)===sid
+    && normalizeKey(m.cls)===wantCls
+    && normalizeKey(m.sec)===wantSec
+    && normalizeKey(m.exam)===wantEx
     && normalizeKey(m.subject)===wantSub);
+  return matches.length ? matches[matches.length-1] : null;
 }
 function renderResult(){
   const cls=rc.value,sec=rsec.value;
