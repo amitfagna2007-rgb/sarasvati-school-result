@@ -45,7 +45,9 @@
   }
   async function initialSync(){
     const ref=userRef();let local=applyTombstones(localData(),getTombstones());const backup=recoveryData();
-    if(backup&&dataSize(backup)>dataSize(local)){putLocal(backup);local=backup;notifyUpdate();}
+    // Recovery backup is only a fallback when local data is genuinely empty.
+    // Do not replace non-empty local data with an older/larger backup, because that can resurrect deleted students.
+    if(backup&&!hasData(local)){putLocal(backup);local=backup;notifyUpdate();}
     recoverySave(local);
     const snap=await ref.get();
     if(snap.exists){
