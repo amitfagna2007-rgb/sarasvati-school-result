@@ -5,11 +5,11 @@
   function addScript(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=resolve;s.onerror=()=>reject(new Error('Firebase CDN failed'));document.head.appendChild(s);});}
   async function loadSDK(){for(const src of SDK){if(src.includes('firebase-app')&&window.firebase&&firebase.initializeApp)continue;if(src.includes('firebase-auth')&&window.firebase&&firebase.auth)continue;if(src.includes('firebase-firestore')&&window.firebase&&firebase.firestore)continue;await addScript(src);}}
   function readLocal(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch(e){return f;}}
-  function localData(){return {students:readLocal('sbvm2_students',[]),subjects:readLocal('sbvm2_subjects',{}),marks:readLocal('sbvm2_marks',[])}}
-  function clean(d){d=d||{};return {students:Array.isArray(d.students)?d.students:[],subjects:d.subjects&&typeof d.subjects==='object'?d.subjects:{},marks:Array.isArray(d.marks)?d.marks:[]};}
-  function putLocal(d){d=clean(d);localStorage.setItem('sbvm2_students',JSON.stringify(d.students));localStorage.setItem('sbvm2_subjects',JSON.stringify(d.subjects));localStorage.setItem('sbvm2_marks',JSON.stringify(d.marks));}
+  function localData(){return {students:readLocal('sbvm2_students',[]),subjects:readLocal('sbvm2_subjects',{}),marks:readLocal('sbvm2_marks',[]),marksExams:readLocal('sbvm2_marks_exams',{})}}
+  function clean(d){d=d||{};return {students:Array.isArray(d.students)?d.students:[],subjects:d.subjects&&typeof d.subjects==='object'?d.subjects:{},marks:Array.isArray(d.marks)?d.marks:[],marksExams:d.marksExams&&typeof d.marksExams==='object'?d.marksExams:{}};}
+  function putLocal(d){d=clean(d);localStorage.setItem('sbvm2_students',JSON.stringify(d.students));localStorage.setItem('sbvm2_subjects',JSON.stringify(d.subjects));localStorage.setItem('sbvm2_marks',JSON.stringify(d.marks));localStorage.setItem('sbvm2_marks_exams',JSON.stringify(d.marksExams));}
   function hasData(d){d=clean(d);return d.students.length>0||d.marks.length>0||Object.values(d.subjects).some(v=>Array.isArray(v)&&v.length);}
-  function dataSize(d){d=clean(d);return d.students.length*100+d.marks.length*10+Object.values(d.subjects).reduce((n,v)=>n+(Array.isArray(v)?v.length:0),0);}
+  function dataSize(d){d=clean(d);return d.students.length*100+d.marks.length*10+Object.values(d.subjects).reduce((n,v)=>n+(Array.isArray(v)?v.length:0),0)+Object.values(d.marksExams).reduce((n,v)=>n+(Array.isArray(v)?v.length:0),0);}
   function recoveryData(){const b=clean(readLocal('sbvm2_recovery_backup',{}));return hasData(b)?b:null;}
   function studentKey(x){return String(x&&x.id||'');}
   function markKey(x){return [x&&x.studentId||'',x&&x.cls||'',x&&x.sec||'',x&&x.exam||'',String(x&&x.subject||'').trim().toLowerCase()].join('|');}
