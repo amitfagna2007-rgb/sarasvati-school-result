@@ -209,8 +209,10 @@ function fillMarksExams(selected){
   const sec=document.getElementById('msec')?.value||'A';
   const list=marksExamsFor(cls,sec);
   const old=selected!==undefined?String(selected):String(e.value||'');
-  e.innerHTML='<option value="">परीक्षा/टेस्ट चुनें</option>'+list.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');
-  if(old&&list.includes(old))e.value=old;
+  const options=list.slice();
+  if(old&&!options.some(x=>normalizeKey(x)===normalizeKey(old)))options.push(old);
+  e.innerHTML='<option value="">परीक्षा/टेस्ट चुनें</option>'+options.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');
+  if(old)e.value=old;
 }
 function addMarksExam(){
   const cls=document.getElementById('mc')?.value||'Class 1';
