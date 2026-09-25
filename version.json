@@ -1,1 +1,1 @@
-{"version":"1.4.38","updated":"2026-09-19","notes":"Fixed automatic reload loop and aligned update versions."}
+{"version":"1.4.39","updated":"2026-09-25","notes":"Fixed Marks Entry test selection: existing tests are selectable and remain selected when switching subjects; added new test option."}
