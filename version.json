@@ -1,1 +1,1 @@
-{"version":"1.4.44","updated":"2026-09-25","notes":"Keep result serial numbers sequential and fixed after rank sorting; roll number and student details move with the ranked student."}
+{"version":"1.4.45","updated":"2026-09-25","notes":"Fix result marks lookup so only the exact student, current class/section, exam and subject record is displayed."}
