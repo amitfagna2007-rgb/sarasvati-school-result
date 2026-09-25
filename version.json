@@ -1,1 +1,1 @@
-{"version":"1.4.40","updated":"2026-09-25","notes":"Prevent recovery backup from resurrecting deleted students; marks test selection fix retained."}
+{"version":"1.4.41","updated":"2026-09-25","notes":"Fix marks test selection persistence across subjects; prevent recovery backup from resurrecting deleted students."}
