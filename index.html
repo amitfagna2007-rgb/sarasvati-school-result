@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173f67">
-<meta name="app-version" content="1.4.44">
+<meta name="app-version" content="1.4.47">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=4">
 <link rel="apple-touch-icon" href="icon-192.png?v=4">
@@ -52,7 +52,7 @@
 <body>
 <!-- Firebase login is loaded directly here; it no longer depends on service-worker injection. -->
 <script src="./firebase-login.js?v=4"></script>
-<script src="./firebase-sync.js?v=6"></script>
+<script src="./firebase-sync.js?v=8"></script>
 <header><div><h1 id="schoolTitle">SARASVATI BAL VIDHYA MANDIR SAKARGHATA</h1><p id="subtitle">Student • Marks • Rank • Report Card Management</p></div><div class="no-print"><button onclick="toggleLang()" id="langBtn">हिंदी / English</button></div></header>
 <nav class="no-print"><button onclick="page('home')">🏠 मुख्य पेज</button><button onclick="page('students')">👨‍🎓 विद्यार्थी</button><button onclick="page('subjects')">📚 विषय</button><button onclick="page('marks')">📝 अंक दर्ज करें</button><button onclick="page('result')">🏆 परिणाम / रैंक</button><button onclick="page('report')">📄 रिपोर्ट कार्ड</button><button onclick="page('marksheet')">📑 Marksheet</button><button onclick="page('backup')">💾 Backup / Update</button><button onclick="page('certificate')">📜 Studying Certificate</button><button onclick="page('student360')">👤 Student 360°</button></nav>
 <main>
@@ -117,7 +117,7 @@
 <section id="backup" class="page"><div class="card"><h2>☁️ Cloud Data Restore</h2><p>Firebase cloud में सुरक्षित school data को इस device पर वापस लाएँ। Restore से पहले current local data का recovery backup अपने-आप बन जाएगा।</p><button class="green" onclick="restoreCloudData()">☁️ Cloud से Data Restore करें</button><div id="cloudRestoreStatus" class="notice">School Result Login के बाद इस button को दबाएँ।</div></div><div class="card"><h2>💾 Backup / Restore</h2><p>Backup डाउनलोड करके सुरक्षित रखें। दूसरे कंप्यूटर पर Restore किया जा सकता है।</p><button onclick="backup()">⬇️ Backup डाउनलोड</button><label><input type="file" id="restoreFile" accept=".json" onchange="restore(this.files[0])"> Backup Restore करें</label></div><div class="card"><h2>🔄 App Update</h2><p>App का code online update हो सकता है। विद्यार्थी, विषय और अंक <b>localStorage</b> में अलग रहते हैं, इसलिए सामान्य code update से data delete नहीं होता।</p><div class="row"><strong>Installed version:</strong> <span id="appVersion">1.4.38</span><button class="green" onclick="checkForUpdate(true)">🔍 Check for Update</button></div><div id="updateStatus" class="notice">Update system तैयार है।</div></div></section>
 </main>
 <script>
-const APP_VERSION='1.4.44';
+const APP_VERSION='1.4.47';
 const CLASSES=['Nursery','LKG','UKG',...Array.from({length:12},(_,i)=>'Class '+(i+1))];
 const defaultSubjects={Nursery:['Hindi','English','Maths','EVS'],LKG:['Hindi','English','Maths','EVS'],UKG:['Hindi','English','Maths','EVS']};
 function readJSON(key,fallback){
