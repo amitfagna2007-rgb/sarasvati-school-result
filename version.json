@@ -1,1 +1,1 @@
-{"version":"1.4.46","updated":"2026-09-26","notes":"Fix result percentage to use the full marks of all subjects in the selected test, not only subjects entered for each student."}
+{"version":"1.4.47","updated":"2026-09-26","notes":"Fix safe two-device Firebase sync with three-way merge, deletion tombstones, and cloud conflict protection."}
