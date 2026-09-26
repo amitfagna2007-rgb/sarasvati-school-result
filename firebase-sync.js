@@ -30,51 +30,122 @@
   function recoverySave(d){try{const data=clean(d||localData());if(!hasData(data))return;localStorage.setItem('sbvm2_recovery_backup',JSON.stringify({savedAt:new Date().toISOString(),...data}));}catch(e){}}
   function notifyUpdate(){window.dispatchEvent(new CustomEvent('sbvm-cloud-update'));}
   function userRef(){const u=auth&&auth.currentUser;if(!u)throw new Error('Not authenticated');return db.collection('users').doc(u.uid).collection('schoolData').doc('main');}
+  function equal(a,b){return JSON.stringify(a)===JSON.stringify(b);}
+  function mergeMapRecords(baseArr,localArr,cloudArr,keyFn){
+    const base=new Map((Array.isArray(baseArr)?baseArr:[]).map(x=>[keyFn(x),x]));
+    const local=new Map((Array.isArray(localArr)?localArr:[]).map(x=>[keyFn(x),x]));
+    const cloud=new Map((Array.isArray(cloudArr)?cloudArr:[]).map(x=>[keyFn(x),x]));
+    const keys=new Set([...base.keys(),...local.keys(),...cloud.keys()]);
+    const out=[];
+    keys.forEach(k=>{
+      const b=base.get(k),l=local.get(k),c=cloud.get(k);
+      const lc=!equal(l,b),cc=!equal(c,b);
+      if(lc&&!cc&&l!==undefined)out.push(l);
+      else if(cc&&!lc&&c!==undefined)out.push(c);
+      else if(lc&&cc&&l!==undefined)out.push(l);
+      else if(l!==undefined)out.push(l);
+      else if(c!==undefined)out.push(c);
+    });
+    return out;
+  }
+  function mergeData(base,local,cloud,t){
+    base=clean(base);local=clean(local);cloud=clean(cloud);
+    const merged=clean({});
+    merged.students=mergeMapRecords(base.students,local.students,cloud.students,studentKey);
+    merged.marks=mergeMapRecords(base.marks,local.marks,cloud.marks,markKey);
+    const classes=new Set([...Object.keys(base.subjects),...Object.keys(local.subjects),...Object.keys(cloud.subjects)]);
+    merged.subjects={};
+    classes.forEach(cls=>{
+      const b=Array.isArray(base.subjects[cls])?base.subjects[cls]:[];
+      const l=Array.isArray(local.subjects[cls])?local.subjects[cls]:[];
+      const c=Array.isArray(cloud.subjects[cls])?cloud.subjects[cls]:[];
+      // Subjects are a list, so merge additions from both devices. Tombstones below
+      // still remove a subject explicitly deleted by the user.
+      merged.subjects[cls]=[...new Map([...b,...l,...c].map(x=>[String(x).trim().toLowerCase(),x])).values()];
+    });
+    const exKeys=new Set([...Object.keys(base.marksExams),...Object.keys(local.marksExams),...Object.keys(cloud.marksExams)]);
+    merged.marksExams={};
+    exKeys.forEach(k=>{
+      const b=Array.isArray(base.marksExams[k])?base.marksExams[k]:[];
+      const l=Array.isArray(local.marksExams[k])?local.marksExams[k]:[];
+      const c=Array.isArray(cloud.marksExams[k])?cloud.marksExams[k]:[];
+      merged.marksExams[k]=[...new Map([...b,...l,...c].map(x=>[normalizeKey(x),x])).values()];
+    });
+    return applyTombstones(merged,t);
+  }
+  function mergeCloudTombstones(raw){
+    const t=getTombstones();
+    (raw&&raw.deletedStudentIds||[]).forEach(x=>t.students.add(String(x)));
+    (raw&&raw.deletedMarkKeys||[]).forEach(x=>t.marks.add(String(x)));
+    (raw&&raw.deletedSubjectKeys||[]).forEach(x=>t.subjects.add(String(x)));
+    saveTombstones(t);
+    return t;
+  }
   async function cloudSave(){
     if(!cloudReady||saving)return false;saving=true;
     try{
-      const local=applyTombstones(localData(),getTombstones());
-      const previous=readLocal('sbvm2_cloud_base',null);
-      if(previous)rememberDeletions(previous,local);
-      const tomb=getTombstones();
-      recoverySave(local);
-      await userRef().set({...local,deletedStudentIds:[...tomb.students],deletedMarkKeys:[...tomb.marks],deletedSubjectKeys:[...tomb.subjects],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-      localStorage.setItem('sbvm2_cloud_base',JSON.stringify(local));
+      let local=applyTombstones(localData(),getTombstones());
+      const base=readLocal('sbvm2_cloud_base',null);
+      if(base)rememberDeletions(base,local);
+      let rawCloud={};
+      try{const snap=await userRef().get();if(snap.exists)rawCloud=snap.data()||{};}catch(e){console.warn('Cloud read before save failed:',e);throw e;}
+      const tomb=mergeCloudTombstones(rawCloud);
+      local=applyTombstones(local,tomb);
+      const cloud=applyTombstones(clean(rawCloud),tomb);
+      const merged=mergeData(base||{},local,cloud,tomb);
+      recoverySave(merged);
+      await userRef().set({
+        ...merged,
+        deletedStudentIds:[...tomb.students],
+        deletedMarkKeys:[...tomb.marks],
+        deletedSubjectKeys:[...tomb.subjects],
+        updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+      },{merge:true});
+      putLocal(merged);
+      localStorage.setItem('sbvm2_cloud_base',JSON.stringify(merged));
+      notifyUpdate();
       return true;
     }catch(e){console.warn('Cloud sync save failed',e);return false}finally{saving=false}
   }
   async function initialSync(){
     const ref=userRef();let local=applyTombstones(localData(),getTombstones());const backup=recoveryData();
     // Recovery backup is only a fallback when local data is genuinely empty.
-    // Do not replace non-empty local data with an older/larger backup, because that can resurrect deleted students.
     if(backup&&!hasData(local)){putLocal(backup);local=backup;notifyUpdate();}
     recoverySave(local);
     const snap=await ref.get();
-    if(snap.exists){
-      const raw=snap.data()||{}, cloud=applyTombstones(clean(raw),getTombstones());
-      const localHas=hasData(local),cloudHas=hasData(cloud);
-      if(!localHas&&cloudHas){putLocal(cloud);local=cloud;notifyUpdate();}
-      else if(localHas){rememberDeletions(readLocal('sbvm2_cloud_base',cloud),local);}
-      if(hasData(local))await cloudSave();
-    }else if(hasData(local))await cloudSave();
+    const raw=snap.exists?(snap.data()||{}):{};
+    const tomb=mergeCloudTombstones(raw);
+    local=applyTombstones(local,tomb);
+    const cloud=applyTombstones(clean(raw),tomb);
+    const base=readLocal('sbvm2_cloud_base',null);
+    if(snap.exists&&hasData(cloud)){
+      const merged=mergeData(base||{},local,cloud,tomb);
+      putLocal(merged);
+      local=merged;
+      localStorage.setItem('sbvm2_cloud_base',JSON.stringify(merged));
+      recoverySave(merged);
+      notifyUpdate();
+      await cloudSave();
+    }else if(hasData(local)){
+      await cloudSave();
+    }
     if(unsub)unsub();
-    unsub=ref.onSnapshot(s=>{
-      if(!s.exists||saving||Date.now()-lastLocalSaveAt<4000)return;
-      const raw=s.data()||{},incoming=applyTombstones(clean(raw),getTombstones()),now=applyTombstones(localData(),getTombstones());
-      if(!hasData(now)&&hasData(incoming)){putLocal(incoming);localStorage.setItem('sbvm2_cloud_base',JSON.stringify(incoming));notifyUpdate();return;}
-      // Local is authoritative after a save. Never re-add deleted/edited local records from cloud.
-      if(hasData(now)&&!same(incoming,now))return;
+    unsub=ref.onSnapshot(async s=>{
+      if(!s.exists||saving)return;
+      try{
+        const raw=s.data()||{},t=mergeCloudTombstones(raw);
+        const localNow=applyTombstones(localData(),t);
+        const cloudNow=applyTombstones(clean(raw),t);
+        const baseNow=readLocal('sbvm2_cloud_base',null);
+        const merged=mergeData(baseNow||{},localNow,cloudNow,t);
+        if(!equal(clean(merged),clean(localNow))){
+          putLocal(merged);
+          recoverySave(merged);
+          notifyUpdate();
+        }
+        localStorage.setItem('sbvm2_cloud_base',JSON.stringify(merged));
+      }catch(e){console.warn('Cloud snapshot merge failed:',e);}
     });
-  }
-  function same(a,b){return JSON.stringify(clean(a))===JSON.stringify(clean(b));}
-  function wrapSave(){if(typeof window.save!=='function'||window.save._autoCloudWrapped)return;const original=window.save;const wrapped=function(){lastLocalSaveAt=Date.now();original();recoverySave();setTimeout(()=>cloudSave(),50)};wrapped._autoCloudWrapped=true;window.save=wrapped;}
-  async function restoreFromCloud(){
-    if(!cloudReady)throw new Error('पहले School Result Login करें।');
-    const snap=await userRef().get();if(!snap.exists)throw new Error('इस account के cloud में कोई saved school data नहीं मिला।');
-    const raw=snap.data()||{};const t=getTombstones();(raw.deletedStudentIds||[]).forEach(x=>t.students.add(String(x)));(raw.deletedMarkKeys||[]).forEach(x=>t.marks.add(String(x)));(raw.deletedSubjectKeys||[]).forEach(x=>t.subjects.add(String(x)));saveTombstones(t);
-    const cloud=applyTombstones(clean(raw),t);if(!hasData(cloud))throw new Error('Cloud record मिला, लेकिन उसमें विद्यार्थी/अंक/विषय data नहीं है.');
-    putLocal(cloud);localStorage.setItem('sbvm2_cloud_base',JSON.stringify(cloud));recoverySave(cloud);notifyUpdate();
-    return {students:cloud.students.length,marks:cloud.marks.length,subjects:Object.keys(cloud.subjects).length};
   }
   function expose(){window.sbvmCloud={get ready(){return cloudReady},save:cloudSave,restore:restoreFromCloud,status:()=>({ready:cloudReady,loggedIn:!!(auth&&auth.currentUser),uid:auth&&auth.currentUser?auth.currentUser.uid:null})}}
   window.addEventListener('sbvm-local-save',()=>{lastLocalSaveAt=Date.now();recoverySave();cloudSave()});
