@@ -1,1 +1,1 @@
-{"version":"1.4.45","updated":"2026-09-25","notes":"Fix result marks lookup so only the exact student, current class/section, exam and subject record is displayed."}
+{"version":"1.4.46","updated":"2026-09-26","notes":"Fix result percentage to use the full marks of all subjects in the selected test, not only subjects entered for each student."}
