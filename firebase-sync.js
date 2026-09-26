@@ -69,7 +69,7 @@
       const b=Array.isArray(base.marksExams[k])?base.marksExams[k]:[];
       const l=Array.isArray(local.marksExams[k])?local.marksExams[k]:[];
       const c=Array.isArray(cloud.marksExams[k])?cloud.marksExams[k]:[];
-      merged.marksExams[k]=[...new Map([...b,...l,...c].map(x=>[normalizeKey(x),x])).values()];
+      merged.marksExams[k]=[...new Map([...b,...l,...c].map(x=>[String(x??'').trim().toLowerCase(),x])).values()];
     });
     return applyTombstones(merged,t);
   }
@@ -138,12 +138,20 @@
         const cloudNow=applyTombstones(clean(raw),t);
         const baseNow=readLocal('sbvm2_cloud_base',null);
         const merged=mergeData(baseNow||{},localNow,cloudNow,t);
-        if(!equal(clean(merged),clean(localNow))){
+        const mergedDiffersLocal=!equal(clean(merged),clean(localNow));
+        const mergedDiffersCloud=!equal(clean(merged),clean(cloudNow));
+        if(mergedDiffersLocal){
           putLocal(merged);
           recoverySave(merged);
           notifyUpdate();
         }
-        localStorage.setItem('sbvm2_cloud_base',JSON.stringify(merged));
+        if(mergedDiffersCloud){
+          // Keep the previous cloud base until cloudSave performs its own
+          // three-way merge, so local unsynced edits are not discarded.
+          await cloudSave();
+        }else{
+          localStorage.setItem('sbvm2_cloud_base',JSON.stringify(merged));
+        }
       }catch(e){console.warn('Cloud snapshot merge failed:',e);}
     });
   }
