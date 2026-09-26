@@ -370,6 +370,20 @@ function renderResult(){
   const list=students.filter(s=>normalizeKey(s.cls)===normalizeKey(cls)&&normalizeKey(s.sec)===normalizeKey(sec));
   if(!list.length){resultTable.innerHTML='<p class="muted">इस कक्षा/सेक्शन में कोई विद्यार्थी नहीं मिला।</p>';return;}
 
+  // Full marks are taken ONCE for each subject from the selected class/section/test,
+  // not separately from the subjects a particular student happened to attempt.
+  // This keeps the percentage denominator the same for all students in the result.
+  const subjectMax={};
+  subs.forEach(sub=>{
+    const key=normalizeKey(sub);
+    const rec=marks.find(m=>normalizeKey(m.cls)===normalizeKey(cls)
+      && normalizeKey(m.sec)===normalizeKey(sec)
+      && normalizeKey(m.exam)===normalizeKey(ex)
+      && normalizeKey(m.subject)===key);
+    subjectMax[key]=rec ? Number(rec.total||100) : 0;
+  });
+  const fullMarks=subs.reduce((sum,sub)=>sum+(Number(subjectMax[normalizeKey(sub)])||0),0);
+
   const rows=list.map((s,index)=>{
     const entered=[];
     subs.forEach(sub=>{
@@ -378,12 +392,12 @@ function renderResult(){
     });
     const enteredMarks=entered.filter(x=>x.m);
     const total=enteredMarks.reduce((z,x)=>z+Number(x.m.score||0),0);
-    const max=enteredMarks.reduce((z,x)=>z+Number(x.m.total||100),0);
+    const max=fullMarks;
     const pct=max?(total/max*100):0;
     return {...s,serial:index+1,entered,total,max,pct,hasMarks:enteredMarks.length>0};
   });
 
-  // Rank is based on TOTAL MARKS, as requested. Only students with at least one mark get a rank.
+  // Rank is based on TOTAL MARKS. Only students with at least one mark get a rank.
   rows.sort((a,b)=>{
     if(a.hasMarks!==b.hasMarks)return a.hasMarks?-1:1;
     if(!a.hasMarks)return String(a.roll).localeCompare(String(b.roll),undefined,{numeric:true});
@@ -415,7 +429,7 @@ function renderResult(){
     h+='<td class="rank-cell">'+r.rank+'</td></tr>';
   });
   h+='</tbody></table></div>';
-  h+='<div class="rank-result-note">ℹ️ नोट: जिस विषय के अंक दर्ज नहीं हैं, वह खाली रहेगा। विद्यार्थी के जितने विषयों के अंक दर्ज हैं, उन्हीं के कुल अंकों के आधार पर परिणाम और रैंक दिखाई जाएगी। बराबर कुल अंक होने पर समान रैंक मिलेगी।</div>';
+  h+='<div class="rank-result-note">ℹ️ नोट: प्रतिशत चयनित परीक्षा के सभी उपलब्ध विषयों के कुल पूर्णांकों पर निकलेगा। जिस विषय के अंक किसी विद्यार्थी के दर्ज नहीं हैं, वह खाली रहेगा लेकिन उस विषय के पूर्णांक प्रतिशत के कुल में शामिल रहेंगे। बराबर कुल अंक होने पर समान रैंक मिलेगी।</div>';
   h+='</div>';
   resultTable.innerHTML=h;
 }
