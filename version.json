@@ -1,1 +1,1 @@
-{"version":"1.4.47","updated":"2026-09-26","notes":"Fix safe two-device Firebase sync with three-way merge, deletion tombstones, and cloud conflict protection."}
+{"version":"1.4.48","updated":"2026-09-26","notes":"Fix safe two-device Firebase sync with three-way merge and protection against overwriting remote changes."}
