@@ -1,1 +1,1 @@
-{"version":"1.4.48","updated":"2026-09-26","notes":"Fix safe two-device Firebase sync with three-way merge and protection against overwriting remote changes."}
+{"version":"1.4.49","updated":"2026-09-29","notes":"Reliable PWA update flow, Windows installed-app refresh, service-worker cache fixes, and safer sync preservation."}
