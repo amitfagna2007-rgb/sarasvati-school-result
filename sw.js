@@ -1,5 +1,5 @@
-const CACHE_NAME='sarasvati-school-v1.4.50';
-const APP_ASSETS=['./','./index.html','./manifest.json','./version.json','./icon-192.png?v=4','./firebase-login.js?v=4','./firebase-sync.js?v=9','./edit-fix.js?v=2'];
+const CACHE_NAME='sarasvati-school-v1.4.51';
+const APP_ASSETS=['./','./index.html','./manifest.json','./version.json','./icon-192.png?v=4','./firebase-login.js?v=4','./firebase-sync.js?v=10','./edit-fix.js?v=2'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(
