@@ -1,1 +1,1 @@
-{"version":"1.4.49","updated":"2026-09-29","notes":"Reliable PWA update flow, Windows installed-app refresh, service-worker cache fixes, and safer sync preservation."}
+{"version":"1.4.50","updated":"2026-09-29","notes":"Reliable installed-PWA update flow, forced worker refresh, Windows app refresh, cache fixes, and safer sync preservation."}
