@@ -155,6 +155,30 @@
       }catch(e){console.warn('Cloud snapshot merge failed:',e);}
     });
   }
+  async function restoreFromCloud(){
+    if(!cloudReady||!auth||!auth.currentUser)throw new Error('School Result Login required.');
+    const ref=userRef();
+    const snap=await ref.get();
+    if(!snap.exists)return {students:0,marks:0};
+    const raw=snap.data()||{};
+    const tomb=mergeCloudTombstones(raw);
+    const local=applyTombstones(localData(),tomb);
+    const cloud=applyTombstones(clean(raw),tomb);
+    const base=readLocal('sbvm2_cloud_base',null);
+    const merged=mergeData(base||{},local,cloud,tomb);
+    recoverySave(merged);
+    putLocal(merged);
+    localStorage.setItem('sbvm2_cloud_base',JSON.stringify(merged));
+    await ref.set({
+      ...merged,
+      deletedStudentIds:[...tomb.students],
+      deletedMarkKeys:[...tomb.marks],
+      deletedSubjectKeys:[...tomb.subjects],
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true});
+    notifyUpdate();
+    return {students:merged.students.length,marks:merged.marks.length};
+  }
   function expose(){window.sbvmCloud={get ready(){return cloudReady},save:cloudSave,restore:restoreFromCloud,status:()=>({ready:cloudReady,loggedIn:!!(auth&&auth.currentUser),uid:auth&&auth.currentUser?auth.currentUser.uid:null})}}
   window.addEventListener('sbvm-local-save',()=>{lastLocalSaveAt=Date.now();recoverySave();cloudSave()});
   async function start(){if(started)return;started=true;expose();try{await loadSDK();if(!window.firebase||!firebase.auth||!firebase.firestore)throw new Error('Firebase SDK incomplete');if(!firebase.apps.length)firebase.initializeApp(CFG);auth=firebase.auth();db=firebase.firestore();await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);auth.onAuthStateChanged(async user=>{if(!user){cloudReady=false;expose();return}cloudReady=true;expose();try{await initialSync()}catch(e){console.warn('Initial cloud sync unavailable:',e)}});setInterval(()=>cloudSave(),10000);window.addEventListener('online',cloudSave)}catch(e){console.warn('Automatic cloud sync unavailable:',e.message)}}
