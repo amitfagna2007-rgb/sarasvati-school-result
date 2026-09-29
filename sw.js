@@ -1,4 +1,4 @@
-const CACHE_NAME='sarasvati-school-v1.4.49';
+const CACHE_NAME='sarasvati-school-v1.4.50';
 const APP_ASSETS=['./','./index.html','./manifest.json','./version.json','./icon-192.png?v=4','./firebase-login.js?v=4','./firebase-sync.js?v=9','./edit-fix.js?v=2'];
 
 self.addEventListener('install',event=>{
@@ -44,9 +44,10 @@ self.addEventListener('fetch',event=>{
   const isIndex=url.pathname.endsWith('/index.html')||url.pathname.endsWith('/');
   const isScript=url.pathname.endsWith('/firebase-login.js')||url.pathname.endsWith('/firebase-sync.js');
   const isManifest=url.pathname.endsWith('/manifest.json');
+  const isSW=url.pathname.endsWith('/sw.js');
 
-  if(isVersion){
-    event.respondWith(networkFirst(req,'./version.json'));
+  if(isVersion||isSW){
+    event.respondWith(networkFirst(req,isVersion?'./version.json':req));
     return;
   }
 
